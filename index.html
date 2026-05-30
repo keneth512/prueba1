@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, shrink-to-fit=no">
-<title>Selva Shooter 3D - Ultra Update</title>
+<title>Selva Shooter 3D - Fixed Controls</title>
 
 <style>
 body {
@@ -41,31 +41,23 @@ body {
 #boss-bar { background: #ff00ff; border: 1px solid #ffaa00; }
 #env-text { color: #ffaa00; font-size: 12px; font-weight: bold; margin-top: 5px; text-shadow: 1px 1px 2px black; }
 
-/* DIVISION DE PANTALLA TÁCTIL */
-#left-touch-zone {
-    position: absolute; top: 0; left: 0; width: 50%; height: 100%; z-index: 20;
-}
-#right-touch-zone {
-    position: absolute; top: 0; right: 0; width: 50%; height: 100%; z-index: 20;
-}
-
-/* MANDOS VISUALES */
+/* MANDOS VISUALES SUPERPUESTOS */
 #joystick-container {
     position: absolute; bottom: 40px; left: 40px;
     width: 110px; height: 110px; background: rgba(255,255,255,0.08);
     border-radius: 50%; border: 2px solid rgba(255,255,255,0.25);
-    display: flex; justify-content: center; align-items: center; pointer-events: none;
+    display: flex; justify-content: center; align-items: center; z-index: 30;
 }
 #joystick-handle {
     width: 45px; height: 45px; background: rgba(255,255,255,0.4);
-    border-radius: 50%; position: absolute; pointer-events: none;
+    border-radius: 50%; position: absolute;
 }
 #fire-btn {
     position: absolute; bottom: 40px; right: 50px;
-    width: 95px; height: 95px; background: rgba(255, 30, 30, 0.35);
+    width: 95px; height: 95px; background: rgba(255, 30, 30, 0.4);
     border: 4px solid rgba(255, 255, 255, 0.6); border-radius: 50%;
     display: flex; justify-content: center; align-items: center;
-    color: white; font-weight: bold; font-size: 13px; z-index: 30;
+    color: white; font-weight: bold; font-size: 13px; z-index: 40;
     box-shadow: 0 0 10px rgba(255,0,0,0.5);
     -webkit-tap-highlight-color: transparent;
 }
@@ -81,10 +73,9 @@ body {
 <div id="tutorial-overlay">
     <h1 style="color: #00ff99; margin-bottom: 5px; font-size: 26px; text-shadow: 0 0 10px #00ff99;">SELVA SHOOTER 3D</h1>
     <p style="color: #ffaa00; font-size: 14px;">🔄 RECOMENDADO: PANTALLA HORIZONTAL 🔄</p>
-    <div class="instruccion">🕹️ IZQUIERDA: Arrastra para moverte lateralmente</div>
-    <div class="instruccion">🔥 DERECHA: Desliza libremente para apuntar la mira</div>
-    <div class="instruccion">🎯 BOTÓN ROJO: ¡Dispara Y MUEVE la cámara al mismo tiempo!</div>
-    <div class="instruccion">⚠️ CUIDADO: El jefe ahora corre más rápido y hace temblar el suelo</div>
+    <div class="instruccion">🕹️ IZQUIERDA: Mueve el stick para desplazarte</div>
+    <div class="instruccion">🔥 DERECHA: Desliza cualquier parte vacía para apuntar</div>
+    <div class="instruccion">🎯 BOTÓN ROJO: ¡Dispara y también sirve para mover la mira!</div>
     <button id="start-btn">¡INICIAR COMBATE!</button>
 </div>
 
@@ -107,13 +98,11 @@ body {
     <div id="env-text">Tiempo: Día</div>
 </div>
 
-<div id="left-touch-zone">
-    <div id="joystick-container"><div id="joystick-handle"></div></div>
+<div id="joystick-container">
+    <div id="joystick-handle"></div>
 </div>
 
-<div id="right-touch-zone">
-    <div id="fire-btn">FUEGO</div>
-</div>
+<div id="fire-btn">FUEGO</div>
 
 <script type="module">
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.164.1/build/three.module.js';
@@ -139,19 +128,17 @@ const sunLight = new THREE.DirectionalLight(0xffffff, 1.2);
 sunLight.position.set(20, 40, 10);
 scene.add(sunLight);
 
-// --- GENERACIÓN DE ENTORNO MEJORADO ---
-const floorGeo = new THREE.PlaneGeometry(120, 320);
-const floorMat = new THREE.MeshStandardMaterial({color: 0x142914, roughness: 0.9});
-const floor = new THREE.Mesh(floorGeo, floorMat);
+// --- ENTORNO ---
+const floor = new THREE.Mesh(new THREE.PlaneGeometry(120, 320), new THREE.MeshStandardMaterial({color: 0x142914, roughness: 0.9}));
 floor.rotation.x = -Math.PI/2;
 scene.add(floor);
 
-// Bosque denso aleatorio (90 Árboles)
+// Bosque denso (90 Árboles)
 const treeGroup = new THREE.Group();
 const trunkGeo = new THREE.CylinderGeometry(0.15, 0.3, 3.5, 5);
-const trunkMat = new THREE.MeshStandardMaterial({color: 0x3d2511, roughness: 0.9});
+const trunkMat = new THREE.MeshStandardMaterial({color: 0x3d2511});
 const leavesGeo = new THREE.SphereGeometry(1.5, 4, 4);
-const leavesMat = new THREE.MeshStandardMaterial({color: 0x0f6b00, roughness: 0.8});
+const leavesMat = new THREE.MeshStandardMaterial({color: 0x0f6b00});
 
 for(let i=0; i<90; i++){
     const tree = new THREE.Group();
@@ -160,7 +147,6 @@ for(let i=0; i<90; i++){
     leaves.position.y = 2.6;
     tree.add(trunk, leaves);
     
-    // Posicionamiento orgánico a los lados del camino
     const side = Math.random() > 0.5 ? 1 : -1;
     const x = side * (9 + Math.random() * 35);
     const z = -Math.random() * 160 + 10;
@@ -173,13 +159,12 @@ for(let i=0; i<90; i++){
 scene.add(treeGroup);
 
 // Castillo
-const castleMat = new THREE.MeshStandardMaterial({color: 0x444444, roughness: 0.7});
-const castle = new THREE.Mesh(new THREE.BoxGeometry(18, 7, 4), castleMat);
+const castle = new THREE.Mesh(new THREE.BoxGeometry(18, 7, 4), new THREE.MeshStandardMaterial({color: 0x444444}));
 castle.position.set(0, 3.5, 14);
 scene.add(castle);
 
-// --- SISTEMA DE LLUVIA (PARTÍCULAS 3D) ---
-const rainCount = 450;
+// --- SISTEMA DE LLUVIA (PARTÍCULAS) ---
+const rainCount = 400;
 const rainGeo = new THREE.BufferGeometry();
 const rainPositions = new Float32Array(rainCount * 3);
 for(let i=0; i<rainCount*3; i+=3) {
@@ -198,142 +183,124 @@ let bossActive = false, bossLife = 40, bossMesh = null;
 let isGameRunning = false;
 let gameTime = 0;
 let shakeIntensity = 0;
-
-// Variables específicas del comportamiento del jefe
 let bossAttackingCastle = false;
 let bossJumpTimer = 0;
 
-// --- CONTROL: MITAD IZQUIERDA (JOYSTICK DE MOVIMIENTO) ---
-const leftZone = document.getElementById('left-touch-zone');
-const joyHandle = document.getElementById('joystick-handle');
+// --- NUEVO GESTOR DE ENTRADA TÁCTIL UNIFICADO ---
 const joyContainer = document.getElementById('joystick-container');
-let moveX = 0, joystickTouchId = null;
+const joyHandle = document.getElementById('joystick-handle');
+const fireBtn = document.getElementById('fire-btn');
 
-leftZone.addEventListener('touchstart', e => {
-    e.preventDefault();
-    if (joystickTouchId !== null) return;
-    const touch = e.changedTouches[0];
-    joystickTouchId = touch.identifier;
-}, { passive: false });
+let moveX = 0;
+let pitch = 0, yaw = 0;
 
-leftZone.addEventListener('touchmove', e => {
-    e.preventDefault();
-    if (joystickTouchId === null) return;
-    let activeTouch = null;
-    for(let i=0; i<e.touches.length; i++) {
-        if(e.touches[i].identifier === joystickTouchId) { activeTouch = e.touches[i]; break; }
+// Variables de asignación de IDs de dedos activos
+let activeJoystickId = null;
+let activeLookId = null;
+let lastLookX = 0, lastLookY = 0;
+let fireIntervalId = null;
+
+// Captura unificada en el documento para evitar pérdidas de rastro
+document.addEventListener('touchstart', (e) => {
+    if (!isGameRunning) return;
+
+    for (let i = 0; i < e.changedTouches.length; i++) {
+        const touch = e.changedTouches[i];
+        const targetId = touch.target.id;
+        const screenX = touch.clientX;
+
+        // Caso 1: Toca el Joystick
+        if ((targetId === 'joystick-container' || targetId === 'joystick-handle') && activeJoystickId === null) {
+            activeJoystickId = touch.identifier;
+            updateJoystick(touch);
+        }
+        // Caso 2: Toca el Botón de Disparo (Inicia ráfaga y puede arrastrar mirada)
+        else if (targetId === 'fire-btn') {
+            if (!fireIntervalId) {
+                fireBullet();
+                fireIntervalId = setInterval(fireBullet, 150);
+            }
+            if (activeLookId === null) {
+                activeLookId = touch.identifier;
+                lastLookX = touch.clientX;
+                lastLookY = touch.clientY;
+            }
+        }
+        // Caso 3: Toca la parte derecha libre de la pantalla para mirar
+        else if (screenX > window.innerWidth / 2 && activeLookId === null) {
+            activeLookId = touch.identifier;
+            lastLookX = touch.clientX;
+            lastLookY = touch.clientY;
+        }
     }
-    if (!activeTouch) return;
+}, { passive: true });
 
+document.addEventListener('touchmove', (e) => {
+    if (!isGameRunning) return;
+
+    for (let i = 0; i < e.touches.length; i++) {
+        const touch = e.touches[i];
+
+        // Mover Joystick
+        if (touch.identifier === activeJoystickId) {
+            updateJoystick(touch);
+        }
+        // Mover Mirada (Sea desde la pantalla libre o arrastrando el botón de disparo)
+        else if (touch.identifier === activeLookId) {
+            const dx = touch.clientX - lastLookX;
+            const dy = touch.clientY - lastLookY;
+
+            // Sensibilidad alta balanceada
+            const sensitivity = 0.015;
+            yaw -= dx * sensitivity;
+            pitch -= dy * sensitivity;
+            pitch = Math.max(-Math.PI / 2.4, Math.min(Math.PI / 2.4, pitch));
+
+            playerBase.rotation.y = yaw;
+            camera.rotation.x = pitch;
+
+            lastLookX = touch.clientX;
+            lastLookY = touch.clientY;
+        }
+    }
+}, { passive: true });
+
+document.addEventListener('touchend', (e) => {
+    for (let i = 0; i < e.changedTouches.length; i++) {
+        const touch = e.changedTouches[i];
+
+        if (touch.identifier === activeJoystickId) {
+            activeJoystickId = null;
+            joyHandle.style.transform = `translate(0px, 0px)`;
+            moveX = 0;
+        }
+        
+        if (touch.identifier === activeLookId) {
+            activeLookId = null;
+        }
+    }
+
+    // Si ya no hay dedos tocando el botón de fuego, apagar ráfaga
+    let overFire = false;
+    for (let i = 0; i < e.touches.length; i++) {
+        if (e.touches[i].target.id === 'fire-btn') overFire = true;
+    }
+    if (!overFire && fireIntervalId) {
+        clearInterval(fireIntervalId);
+        fireIntervalId = null;
+    }
+});
+
+function updateJoystick(touch) {
     const rect = joyContainer.getBoundingClientRect();
     const centerX = rect.left + rect.width / 2;
-    let dx = activeTouch.clientX - centerX;
+    let dx = touch.clientX - centerX;
     const maxRadius = rect.width / 2;
 
     dx = Math.max(-maxRadius, Math.min(maxRadius, dx));
     joyHandle.style.transform = `translateX(${dx}px)`;
-    moveX = dx / maxRadius;
-}, { passive: false });
-
-leftZone.addEventListener('touchend', e => {
-    e.preventDefault();
-    for(let i=0; i<e.changedTouches.length; i++) {
-        if(e.changedTouches[i].identifier === joystickTouchId) {
-            joystickTouchId = null; joyHandle.style.transform = `translateX(0px)`; moveX = 0; break;
-        }
-    }
-});
-
-// --- CONTROL: MITAD DERECHA + BOTÓN INTELIGENTE (TIPO FREE FIRE) ---
-const rightZone = document.getElementById('right-touch-zone');
-const fireBtn = document.getElementById('fire-btn');
-let lookTouchId = null;
-let lastTouchX = 0, lastTouchY = 0;
-let pitch = 0, yaw = 0;
-
-// Disparador continuo automático mientras se sostiene el botón
-let fireIntervalId = null;
-
-function handleLookMove(activeTouch) {
-    const dx = activeTouch.clientX - lastTouchX;
-    const dy = activeTouch.clientY - lastTouchY;
-
-    // ALTA SENSIBILIDAD SOLICITADA
-    const sensitivity = 0.018;
-    yaw -= dx * sensitivity;
-    pitch -= dy * sensitivity;
-    pitch = Math.max(-Math.PI/2.4, Math.min(Math.PI/2.4, pitch));
-    
-    playerBase.rotation.y = yaw;
-    camera.rotation.x = pitch;
-
-    lastTouchX = activeTouch.clientX;
-    lastTouchY = activeTouch.clientY;
+    moveX = dx / maxRadius; // Asigna el valor de velocidad lateral
 }
-
-// Intercepción global de la zona derecha
-rightZone.addEventListener('touchstart', e => {
-    if(e.target.id === 'fire-btn') return; // Delegar al listener específico del botón
-    if (lookTouchId !== null) return;
-
-    const touch = e.changedTouches[0];
-    lookTouchId = touch.identifier;
-    lastTouchX = touch.clientX;
-    lastTouchY = touch.clientY;
-});
-
-rightZone.addEventListener('touchmove', e => {
-    if (lookTouchId === null) return;
-    let activeTouch = null;
-    for(let i=0; i<e.touches.length; i++) {
-        if(e.touches[i].identifier === lookTouchId) { activeTouch = e.touches[i]; break; }
-    }
-    if (activeTouch) handleLookMove(activeTouch);
-});
-
-rightZone.addEventListener('touchend', e => {
-    for(let i=0; i<e.changedTouches.length; i++) {
-        if(e.changedTouches[i].identifier === lookTouchId) { lookTouchId = null; break; }
-    }
-});
-
-// Lógica Dual del Botón de disparo (Dispara + Permite Rotar Cámara)
-fireBtn.addEventListener('touchstart', e => {
-    e.preventDefault();
-    const touch = e.changedTouches[0];
-    
-    // El botón toma el control de la mirada si no hay otro dedo haciéndolo
-    if(lookTouchId === null) {
-        lookTouchId = touch.identifier;
-        lastTouchX = touch.clientX;
-        lastTouchY = touch.clientY;
-    }
-
-    fireBullet();
-    if(!fireIntervalId) {
-        fireIntervalId = setInterval(fireBullet, 150); // Ráfaga veloz continua
-    }
-}, { passive: false });
-
-fireBtn.addEventListener('touchmove', e => {
-    e.preventDefault();
-    if (lookTouchId === null) return;
-    let activeTouch = null;
-    for(let i=0; i<e.touches.length; i++) {
-        if(e.touches[i].identifier === lookTouchId) { activeTouch = e.touches[i]; break; }
-    }
-    if (activeTouch) handleLookMove(activeTouch);
-}, { passive: false });
-
-fireBtn.addEventListener('touchend', e => {
-    e.preventDefault();
-    clearInterval(fireIntervalId);
-    fireIntervalId = null;
-    
-    for(let i=0; i<e.changedTouches.length; i++) {
-        if(e.changedTouches[i].identifier === lookTouchId) { lookTouchId = null; break; }
-    }
-});
 
 // --- SISTEMA DE BALAS ---
 const bullets = [];
@@ -375,9 +342,7 @@ function spawnEnemy(){
 setInterval(spawnEnemy, 950);
 
 function spawnBoss(){
-    bossActive = true; 
-    bossLife = 40;
-    bossAttackingCastle = false;
+    bossActive = true; bossLife = 40; bossAttackingCastle = false;
     bossMesh = new THREE.Mesh(new THREE.BoxGeometry(4, 4, 4), new THREE.MeshStandardMaterial({color: 0xaa00ff, roughness: 0.4}));
     bossMesh.position.set(0, 2, -80);
     scene.add(bossMesh);
@@ -385,63 +350,53 @@ function spawnBoss(){
     updateUI();
 }
 
-// --- ANIMACIÓN DEL MOTOR (LOOP PRINCIPAL) ---
+// --- ANIMACIÓN MOTOR (LOOP PRINCIPAL) ---
 function update() {
     if(!isGameRunning) return;
 
-    gameTime += 0.016; // Aproximación basada en 60 FPS
+    gameTime += 0.016;
 
-    // 🌤️ CICLO DE DIA Y NOCHE (30s día, 30s noche = 60s ciclo total)
+    // 🌤️ CICLO DÍA / NOCHE (30s y 30s)
     const cyclePos = (gameTime % 60) / 60; 
-    const dayFactor = Math.sin(cyclePos * Math.PI * 2); // Oscilación suave entre -1 y 1
+    const dayFactor = Math.sin(cyclePos * Math.PI * 2);
 
-    // Transición fluida de luces ambientales y del color de niebla
-    const intensity = Math.max(0.15, (dayFactor + 1) / 2); // Rango de 0.15 (Noche) a 1.0 (Día)
-    sunLight.intensity = intensity * 1.3;
+    const intensity = Math.max(0.15, (dayFactor + 1) / 2); 
+    sunLight.intensity = intensity * 1.2;
     hemiLight.intensity = Math.max(0.2, intensity * 0.7);
     
     const skyColor = new THREE.Color(0x1a2a3a).multiplyScalar(intensity);
     scene.background = skyColor;
     scene.fog.color = skyColor;
 
-    // Actualizar texto del entorno de forma amigable
     const envText = document.getElementById('env-text');
     if (dayFactor > 0.3) envText.innerText = "Tiempo: Día ☀️";
     else if (dayFactor < -0.3) envText.innerText = "Tiempo: Noche 🌙";
     else envText.innerText = "Tiempo: Transición Climatológica 🌓";
 
-    // 🌧️ PETICIÓN EXTRA OPTIONAL: Tormenta de lluvia cada 2 días (Cada 120 segundos)
-    const isRainyPeriod = (gameTime % 120) > 60; // Llueve la mitad del tiempo de un ciclo extendido
+    // 🌧️ LLUVIA CADA 2 DIAS
+    const isRainyPeriod = (gameTime % 120) > 60;
     if(isRainyPeriod) {
-        rainMat.opacity = Math.min(0.6, rainMat.opacity + 0.01); // Entrada suave de la lluvia
-        
-        // Animación física de caída de partículas de lluvia
+        rainMat.opacity = Math.min(0.6, rainMat.opacity + 0.01);
         const positions = rainParticles.geometry.attributes.position.array;
         for(let i=1; i<positions.length; i+=3) {
-            positions[i] -= 0.45; // Velocidad de caída vertical
-            if(positions[i] < 0) positions[i] = 25 + Math.random()*5; // Re-generación en el cielo
+            positions[i] -= 0.45;
+            if(positions[i] < 0) positions[i] = 25 + Math.random()*5;
         }
         rainParticles.geometry.attributes.position.needsUpdate = true;
-        
-        // El cielo se oscurece extra por las nubes de tormenta
         sunLight.intensity *= 0.5;
     } else {
-        rainMat.opacity = Math.max(0, rainMat.opacity - 0.01); // Disipación suave
+        rainMat.opacity = Math.max(0, rainMat.opacity - 0.01);
     }
 
-    // APLICACIÓN DE TERREMOTO EN LA CÁMARA (Screen Shake)
+    // TERREMOTO CÁMARA
     if(shakeIntensity > 0) {
-        camera.position.set(
-            (Math.random() - 0.5) * shakeIntensity,
-            (Math.random() - 0.5) * shakeIntensity,
-            0
-        );
-        shakeIntensity *= 0.9; // Amortiguación natural
+        camera.position.set((Math.random() - 0.5) * shakeIntensity, (Math.random() - 0.5) * shakeIntensity, 0);
+        shakeIntensity *= 0.9;
     } else {
         camera.position.set(0, 0, 0);
     }
 
-    // Desplazamiento lateral del jugador vía Joystick
+    // Movimiento Joystick lateral
     playerBase.position.x += moveX * 0.16;
     playerBase.position.x = Math.max(-7.8, Math.min(7.8, playerBase.position.x));
 
@@ -462,36 +417,26 @@ function update() {
         }
     });
 
-    // COMPORTAMIENTO AVANZADO DEL JEFE FINAL
+    // Jefe final veloz y saltarín
     if(bossActive && bossMesh){
         if(!bossAttackingCastle) {
-            // VELOCIDAD DEL JEFE INCREMENTADA (Subió de 0.055 a 0.075)
-            bossMesh.position.z += 0.075;
-            
-            // Si el jefe toca el frente del castillo
-            if(bossMesh.position.z > 11) { 
-                bossAttackingCastle = true;
-                bossJumpTimer = 0;
-            }
+            bossMesh.position.z += 0.085; // Más veloz
+            if(bossMesh.position.z > 11) bossAttackingCastle = true;
         } else {
-            // Mecánica de pisotón y saltos furiosos
-            bossJumpTimer += 0.2;
-            bossMesh.position.y = 2 + Math.abs(Math.sin(bossJumpTimer)) * 2.5; // Curva de salto
+            bossJumpTimer += 0.25;
+            bossMesh.position.y = 2 + Math.abs(Math.sin(bossJumpTimer)) * 2.5; 
             
-            // Impacto contra el suelo detectado en la parte baja de la parábola
             if(bossMesh.position.y < 2.2) {
-                shakeIntensity = 0.35; // Activa temblor fuerte de cámara
-                playSfx(80, 0.15); // Sonido grave de impacto
-                
-                // Daño crítico por segundo al castillo
-                castleLife -= 0.08; 
+                shakeIntensity = 0.35;
+                playSfx(80, 0.12);
+                castleLife -= 0.09; 
                 updateUI();
                 if(castleLife <= 0) endGame();
             }
         }
     }
 
-    // Colisiones e impactos de proyectiles
+    // Impactos
     bullets.forEach((b, bi) => {
         if(bossActive && bossMesh && b.position.distanceTo(bossMesh.position) < 2.4){
             scene.remove(b); bullets.splice(bi, 1);
@@ -499,8 +444,7 @@ function update() {
             playSfx(220, 0.08);
             if(bossLife <= 0){
                 scene.remove(bossMesh); bossActive = false; bossAttackingCastle = false;
-                score += 50; enemiesKilled = 0; wave++; 
-                enemiesPerWave += 5; updateUI();
+                score += 50; enemiesKilled = 0; wave++; enemiesPerWave += 5; updateUI();
                 document.getElementById('boss-ui').style.display = 'none';
             }
             return;
@@ -537,7 +481,6 @@ function animate(){
     renderer.render(scene, camera);
 }
 
-// Activador del panel tutorial
 document.getElementById('start-btn').addEventListener('click', () => {
     document.getElementById('tutorial-overlay').style.display = 'none';
     if(audioCtx.state === 'suspended') audioCtx.resume();
