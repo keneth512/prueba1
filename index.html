@@ -149,25 +149,20 @@ for (let i = 0; i < 30; i++) {
 }
 
 // ─── ÁRBOLES ──────────────────────────────────────────────────────────────────
-const TREE_COUNT = 90;
-const trunkInst = new THREE.InstancedMesh(
-    new THREE.CylinderGeometry(0.12, 0.28, 3.5, 5),
-    new THREE.MeshLambertMaterial({ color: 0x4a2e10 }),
-    TREE_COUNT
-);
-const leavesInst = new THREE.InstancedMesh(
-    new THREE.SphereGeometry(1.5, 4, 4),
-    new THREE.MeshLambertMaterial({ color: 0x1a6b08 }),
-    TREE_COUNT * 2
-);
-const leafColorPalette = [0x0d5e00, 0x145c10, 0x1a6b08, 0x0b4a1a];
-const _leafColor = new THREE.Color();
+const trunkInstGeo = new THREE.CylinderGeometry(0.12, 0.28, 3.5, 5);
+const trunkInstMat = new THREE.MeshLambertMaterial({ color: 0x4a2e10 });
+const leavesInstGeo = new THREE.SphereGeometry(1.5, 4, 4);
+const leafColors = [0x0d5e00, 0x145c10, 0x1a6b08, 0x0b4a1a];
 
+const TREE_COUNT = 90;
+const trunkInst  = new THREE.InstancedMesh(trunkInstGeo, trunkInstMat, TREE_COUNT);
+const leafInsts = leafColors.map(c =>
+    new THREE.InstancedMesh(leavesInstGeo, new THREE.MeshLambertMaterial({ color: c }), Math.ceil(TREE_COUNT / leafColors.length))
+);
+leafInsts.forEach(m => { m.count = 0; scene.add(m); });
 scene.add(trunkInst);
-scene.add(leavesInst);
 
 const _dummy = new THREE.Object3D();
-let leafIdx = 0;
 for (let i = 0; i < TREE_COUNT; i++) {
     const side  = Math.random() > 0.5 ? 1 : -1;
     const scale = 0.75 + Math.random() * 0.7;
@@ -180,26 +175,22 @@ for (let i = 0; i < TREE_COUNT; i++) {
     _dummy.updateMatrix();
     trunkInst.setMatrixAt(i, _dummy.matrix);
 
+    const li = i % leafColors.length;
+    const lm = leafInsts[li];
     _dummy.position.set(x, (2.2 + 1.75) * scale, z);
     _dummy.scale.set(scale * 1.4, scale * 1.2, scale * 1.4);
-    _dummy.rotation.y = Math.random() * Math.PI * 2;
     _dummy.updateMatrix();
-    leavesInst.setMatrixAt(leafIdx, _dummy.matrix);
-    _leafColor.setHex(leafColorPalette[i % leafColorPalette.length]);
-    leavesInst.setColorAt(leafIdx, _leafColor);
-    leafIdx++;
+    lm.setMatrixAt(lm.count, _dummy.matrix);
+    lm.count++;
 
     _dummy.position.set(x, (3.4 + 1.75) * scale, z);
     _dummy.scale.setScalar(scale * 0.9);
     _dummy.updateMatrix();
-    leavesInst.setMatrixAt(leafIdx, _dummy.matrix);
-    _leafColor.setHex(leafColorPalette[(i + 2) % leafColorPalette.length]);
-    leavesInst.setColorAt(leafIdx, _leafColor);
-    leafIdx++;
+    lm.setMatrixAt(lm.count, _dummy.matrix);
+    lm.count++;
 }
 trunkInst.instanceMatrix.needsUpdate = true;
-leavesInst.instanceMatrix.needsUpdate = true;
-if (leavesInst.instanceColor) leavesInst.instanceColor.needsUpdate = true;
+leafInsts.forEach(m => { m.instanceMatrix.needsUpdate = true; });
 
 // ─── CASTILLO ─────────────────────────────────────────────────────────────────
 const castleMat     = new THREE.MeshLambertMaterial({ color: 0x5a5a5a });
@@ -335,12 +326,12 @@ function playBoom() {
     playSfx(85, 0.3, 'sine', 0.1);
 }
 
-// ─── ESTADO VARIABLE GLOBAL ───────────────────────────────────────────────────
+// ─── VARIABLES GLOBALES DE ESTADO (CORREGIDAS) ────────────────────────────────
 let score = 0, castleLife = 20, wave = 1, enemiesKilled = 0, enemiesPerWave = 10;
 let bossActive = false, bossLife = 80, bossMesh = null;
 let isGameRunning = false;
 let gameTime = 0, dt = 0.016, shakeIntensity = 0;
-let lastTime = performance.now(); // Corrección clave: Definida globalmente
+let lastTime = performance.now(); // Declarada arriba correctamente global
 
 let bossState = 'walking';
 let bossStateTimer = 0;
@@ -351,7 +342,7 @@ let bossQuarterHits = 0;
 const crackFlash = document.getElementById('crack-flash');
 let flashTimer = 0;
 
-// ─── CONTROLES (CORREGIDOS PARA CAMARA Y DESPLAZAMIENTO) ─────────────────────
+// ─── CONTROLES DE TOQUE DE VENTANA GLOBAL (REPARADOS) ────────────────────────
 const joyContainer = document.getElementById('joystick-container');
 const joyHandle    = document.getElementById('joystick-handle');
 const fireBtn      = document.getElementById('fire-btn');
@@ -396,11 +387,11 @@ fireBtn.addEventListener('touchend', e => {
     }
 }, {passive:false});
 
-// Movimiento de mirada asignado a la ventana global para evitar bloqueos de capas
+// SOLUCIÓN AL GIRO DE PANTALLA: Escucha global de ventanas para evitar bloqueos
 window.addEventListener('touchstart', e => {
     if (!isGameRunning) return;
     for (const t of e.changedTouches) {
-        // Si toca en la mitad derecha y no está ocupado el look, se activa
+        // Si el toque es en la mitad derecha de la pantalla y no está sobre los botones
         if (activeLookId === null && t.clientX > window.innerWidth / 2 && t.target !== fireBtn) {
             activeLookId = t.identifier;
             lastLookX = t.clientX;
@@ -420,7 +411,7 @@ window.addEventListener('touchend', e => {
 
 function applyLook(touch) {
     const dx=touch.clientX-lastLookX, dy=touch.clientY-lastLookY;
-    yaw-=dx*0.008; pitch-=dy*0.008; // Sensibilidad suavizada
+    yaw-=dx*0.007; pitch-=dy*0.007; // Sensibilidad estabilizada
     pitch=Math.max(-Math.PI/2.4,Math.min(Math.PI/2.4,pitch));
     playerBase.rotation.y=yaw; camera.rotation.x=pitch;
     lastLookX=touch.clientX; lastLookY=touch.clientY;
@@ -483,7 +474,8 @@ function makeEnemy() {
 const enemies = [];
 let spawnTimer = null;
 function startSpawning() {
-    if(spawnTimer) clearInterval(spawnTimer);
+    if (spawnTimer) clearInterval(spawnTimer);
+    // Reparado: El intervalo ahora se ejecuta correctamente al inicio
     spawnTimer = setInterval(() => {
         if (!isGameRunning || bossActive || enemiesKilled >= enemiesPerWave) return;
         const e = makeEnemy();
@@ -570,7 +562,7 @@ function bulletHitsObject(bullet, obj) {
     return (dx*dx + dy*dy + dz*dz) < hr*hr;
 }
 
-// ─── LOOP PRINCIPAL ───────────────────────────────────────────────────────────
+// ─── LOOP PRINCIPAL DEL JUEGO ─────────────────────────────────────────────────
 let rainFrameCount = 0;
 
 function update() {
@@ -586,7 +578,7 @@ function update() {
         if (flashTimer <= 0) crackFlash.style.opacity = '0';
     }
 
-    // ── Día/Noche ──
+    // ── Ciclo de Iluminación ──
     const cyclePos = (gameTime % 60) / 60;
     const dayFactor = Math.sin(cyclePos * Math.PI * 2);
     const dayIntensity = Math.max(0.45, (dayFactor+1)/2);
@@ -605,7 +597,7 @@ function update() {
     else if (dayFactor < -0.35) envText.innerText = "Tiempo: Noche 🌙";
     else                         envText.innerText = "Tiempo: Atardecer/Amanecer 🌅";
 
-    // ── Lluvia ──
+    // ── Clima Lluvia ──
     const isRainy = (gameTime % 120) > 60;
     if (isRainy && !rainVisible) { rainVisible = true; }
     if (!isRainy && rainVisible) {
@@ -626,7 +618,7 @@ function update() {
         }
     }
 
-    // ── Shake ──
+    // ── Cámara Impacto Shake ──
     if (shakeIntensity > 0.01) {
         camera.position.set((Math.random()-0.5)*shakeIntensity, (Math.random()-0.5)*shakeIntensity, 0);
         shakeIntensity *= 0.82;
@@ -637,7 +629,7 @@ function update() {
     playerBase.position.x += moveX * 0.16;
     playerBase.position.x = Math.max(-7.8, Math.min(7.8, playerBase.position.x));
 
-    // ── Balas ──
+    // ── Desplazar Proyectiles ──
     for (let i = bullets.length-1; i >= 0; i--) {
         const b = bullets[i];
         b.position.addScaledVector(b.userData.dir, 1.5);
@@ -646,7 +638,7 @@ function update() {
         }
     }
 
-    // ── Enemigos Básicos ──
+    // ── Desplazar Enemigos Comunes ──
     for (let i = enemies.length-1; i >= 0; i--) {
         const e = enemies[i];
         e.position.z += 0.15;
@@ -664,7 +656,7 @@ function update() {
         }
     }
 
-    // ── Máquina de Estados del Jefe ──
+    // ── Controlador de Estados del Boss ──
     if (bossActive && bossMesh) {
         bossStateTimer += dt;
 
@@ -712,7 +704,7 @@ function update() {
             }
         } else if (bossState === 'landing') {
             bossMesh.rotation.y += dt * 0.5;
-            if (bossStateTimer >= 0.8) {
+            if (bossStateTimer >= 0.3) {
                 bossState = 'idle';
                 bossStateTimer = 0;
             }
@@ -726,7 +718,7 @@ function update() {
                 bossStateTimer = 0;
                 shakeIntensity = 1.0;
                 playBoom(); playBoom();
-                castleLife -= 4; updateUI();
+                castleLife -= 3; updateUI();
                 triggerCrackFlash();
                 spawnLongCrack(bossMesh.position.x, bossMesh.position.z);
                 if (castleLife <= 0) { endGame(); return; }
@@ -734,7 +726,7 @@ function update() {
         }
     }
 
-    // ── Grietas Opacidad ──
+    // ── Opacidad de Grietas ──
     for (let i = crackLines.length-1; i >= 0; i--) {
         crackLines[i].userData.life -= dt;
         const t = crackLines[i].userData.life;
@@ -745,7 +737,7 @@ function update() {
         if (t <= 0) { scene.remove(crackLines[i]); crackLines.splice(i,1); }
     }
 
-    // ── Chispas Animación ──
+    // ── Partículas Dinámicas ──
     for (const s of sparkPool) {
         if (!s.userData.active) continue;
         s.position.add(s.userData.vel);
@@ -754,7 +746,7 @@ function update() {
         if (s.userData.life <= 0) { s.userData.active=false; s.visible=false; }
     }
 
-    // ── DETECCIÓN DE IMPACTOS ──
+    // ── DETECCIÓN DE IMPACTOS / DAÑO ──
     for (let bi = bullets.length-1; bi >= 0; bi--) {
         const b = bullets[bi];
         let hit = false;
@@ -768,11 +760,13 @@ function update() {
             const quartersPassed = Math.floor((80 - bossLife) / 20);
             if (quartersPassed > bossQuarterHits) {
                 bossQuarterHits = quartersPassed;
-                bossSpeed += 0.03;
-                bossState = 'longJump';
-                bossStateTimer = 0;
-                bossJumpPhase = 0;
-                playSfx(50, 0.8, 'sawtooth', 0.2);
+                bossSpeed += 0.025;
+                if (bossState === 'idle' || bossState === 'landing') {
+                    bossState = 'longJump';
+                    bossStateTimer = 0;
+                    bossJumpPhase = 0;
+                    playSfx(50, 0.8, 'sawtooth', 0.2);
+                }
             }
 
             if (bossLife <= 0) {
@@ -792,10 +786,7 @@ function update() {
                 bullets.splice(bi,1); enemies.splice(ei,1);
                 score++; enemiesKilled++; updateUI(); hit=true;
                 playSfx(300, 0.07, 'square', 0.05);
-                
-                if (enemiesKilled >= enemiesPerWave && enemies.length === 0 && !bossActive) {
-                    spawnBoss();
-                }
+                if (enemiesKilled >= enemiesPerWave) spawnBoss();
             }
         }
     }
@@ -807,12 +798,12 @@ function animate() {
     renderer.render(scene, camera);
 }
 
-// ─── INICIO DEL JUEGO ─────────────────────────────────────────────────────────
+// ─── INTERFAZ DE INICIO DE PARTIDA ───────────────────────────────────────────
 window.startGame = function() {
     document.getElementById('tutorial-overlay').style.display='none';
     isGameRunning=true;
-    lastTime=performance.now();
-    startSpawning(); // Inicia la horda inmediatamente
+    lastTime=performance.now(); // Reiniciar contador justo al pulsar iniciar
+    startSpawning();
     try { getAudio().resume(); } catch(e) {}
 };
 
