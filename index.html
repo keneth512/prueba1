@@ -3,33 +3,32 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, shrink-to-fit=no">
-<title>Selva Shooter 3D - Fixed Controls</title>
-
+<title>Selva Shooter 3D</title>
 <style>
+* { box-sizing: border-box; }
 body {
     margin: 0; overflow: hidden; background: #000;
-    user-select: none; -webkit-user-select: none; touch-action: none;
-    font-family: Arial, sans-serif;
+    user-select: none; -webkit-user-select: none;
+    touch-action: none; font-family: Arial, sans-serif;
 }
+canvas { display: block; position: absolute; top: 0; left: 0; z-index: 1; }
 
-/* INTERFAZ DE INDICACIONES */
 #tutorial-overlay {
-    position: absolute; width: 100%; height: 100%;
-    background: rgba(10, 15, 25, 0.95); color: #fff;
+    position: fixed; width: 100%; height: 100%;
+    background: rgba(10, 15, 25, 0.97); color: #fff;
     display: flex; flex-direction: column; justify-content: center;
-    align-items: center; z-index: 100; text-align: center; padding: 20px;
-    box-sizing: border-box;
+    align-items: center; z-index: 200; text-align: center; padding: 20px;
 }
 .instruccion { margin: 8px 0; color: #00ff99; font-size: 15px; }
 #start-btn {
     margin-top: 20px; padding: 12px 35px; background: #00ff99;
     color: #000; font-weight: bold; border-radius: 30px; cursor: pointer;
     border: none; font-size: 18px; box-shadow: 0 0 15px #00ff99;
+    -webkit-tap-highlight-color: transparent;
 }
 
-/* BARRAS DE ESTADO */
 #ui-top {
-    position: absolute; top: 10px; left: 10px; z-index: 10; pointer-events: none;
+    position: fixed; top: 10px; left: 10px; z-index: 50; pointer-events: none;
 }
 .stat-box { margin-bottom: 5px; }
 .label { font-size: 11px; color: #ccc; margin-bottom: 2px; text-shadow: 1px 1px 2px black; }
@@ -41,48 +40,48 @@ body {
 #boss-bar { background: #ff00ff; border: 1px solid #ffaa00; }
 #env-text { color: #ffaa00; font-size: 12px; font-weight: bold; margin-top: 5px; text-shadow: 1px 1px 2px black; }
 
-/* MANDOS VISUALES SUPERPUESTOS */
 #joystick-container {
-    position: absolute; bottom: 40px; left: 40px;
+    position: fixed; bottom: 40px; left: 40px;
     width: 110px; height: 110px; background: rgba(255,255,255,0.08);
     border-radius: 50%; border: 2px solid rgba(255,255,255,0.25);
-    display: flex; justify-content: center; align-items: center; z-index: 30;
+    display: flex; justify-content: center; align-items: center;
+    z-index: 100; touch-action: none;
 }
 #joystick-handle {
     width: 45px; height: 45px; background: rgba(255,255,255,0.4);
-    border-radius: 50%; position: absolute;
+    border-radius: 50%; position: absolute; pointer-events: none;
 }
 #fire-btn {
-    position: absolute; bottom: 40px; right: 50px;
+    position: fixed; bottom: 40px; right: 50px;
     width: 95px; height: 95px; background: rgba(255, 30, 30, 0.4);
     border: 4px solid rgba(255, 255, 255, 0.6); border-radius: 50%;
     display: flex; justify-content: center; align-items: center;
-    color: white; font-weight: bold; font-size: 13px; z-index: 40;
+    color: white; font-weight: bold; font-size: 13px; z-index: 100;
     box-shadow: 0 0 10px rgba(255,0,0,0.5);
-    -webkit-tap-highlight-color: transparent;
+    -webkit-tap-highlight-color: transparent; touch-action: none;
 }
 #crosshair {
-    position: absolute; top: 50%; left: 50%; width: 10px; height: 10px;
+    position: fixed; top: 50%; left: 50%; width: 10px; height: 10px;
     border: 2px solid rgba(0, 255, 153, 0.8); border-radius: 50%;
-    transform: translate(-50%, -50%); pointer-events: none; z-index: 15;
+    transform: translate(-50%, -50%); pointer-events: none; z-index: 50;
 }
 </style>
 </head>
 <body>
 
 <div id="tutorial-overlay">
-    <h1 style="color: #00ff99; margin-bottom: 5px; font-size: 26px; text-shadow: 0 0 10px #00ff99;">SELVA SHOOTER 3D</h1>
-    <p style="color: #ffaa00; font-size: 14px;">🔄 RECOMENDADO: PANTALLA HORIZONTAL 🔄</p>
+    <h1 style="color:#00ff99;margin-bottom:5px;font-size:26px;text-shadow:0 0 10px #00ff99;">SELVA SHOOTER 3D</h1>
+    <p style="color:#ffaa00;font-size:14px;">🔄 RECOMENDADO: PANTALLA HORIZONTAL 🔄</p>
     <div class="instruccion">🕹️ IZQUIERDA: Mueve el stick para desplazarte</div>
     <div class="instruccion">🔥 DERECHA: Desliza cualquier parte vacía para apuntar</div>
     <div class="instruccion">🎯 BOTÓN ROJO: ¡Dispara y también sirve para mover la mira!</div>
-    <button id="start-btn">¡INICIAR COMBATE!</button>
+    <button id="start-btn" onclick="startGame()">¡INICIAR COMBATE!</button>
 </div>
 
 <div id="crosshair"></div>
 
 <div id="ui-top">
-    <div id="score-text" style="color: white; font-size: 18px; font-weight: bold; text-shadow: 1px 1px 2px black;">Puntos: 0</div>
+    <div id="score-text" style="color:white;font-size:18px;font-weight:bold;text-shadow:1px 1px 2px black;">Puntos: 0</div>
     <div class="stat-box">
         <div class="label">Estructura del Castillo</div>
         <div class="bar-bg"><div id="castle-bar" class="bar-fill"></div></div>
@@ -92,7 +91,7 @@ body {
         <div class="bar-bg"><div id="wave-bar" class="bar-fill"></div></div>
     </div>
     <div id="boss-ui">
-        <div class="label" style="color: #ff55ff; font-weight: bold;">⚠️ ¡JEFE DEVASTANDO EL CASTILLO!</div>
+        <div class="label" style="color:#ff55ff;font-weight:bold;">⚠️ ¡JEFE DEVASTANDO EL CASTILLO!</div>
         <div class="bar-bg"><div id="boss-bar" class="bar-fill"></div></div>
     </div>
     <div id="env-text">Tiempo: Día</div>
@@ -107,9 +106,13 @@ body {
 <script type="module">
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.164.1/build/three.module.js';
 
-// --- CONFIGURACIÓN ESCENA Y RENDER ---
+// ─── ESCENA ───────────────────────────────────────────────────────────────────
 const scene = new THREE.Scene();
-const camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
+scene.background = new THREE.Color(0x1a2a3a);
+scene.fog = new THREE.Fog(0x1a2a3a, 40, 130);
+
+const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+
 const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
@@ -120,7 +123,7 @@ playerBase.position.set(0, 1.6, 8);
 scene.add(playerBase);
 playerBase.add(camera);
 
-// --- ILUMINACIÓN DINÁMICA ---
+// ─── LUCES ────────────────────────────────────────────────────────────────────
 const hemiLight = new THREE.HemisphereLight(0xffffff, 0x444444, 0.6);
 scene.add(hemiLight);
 
@@ -128,259 +131,299 @@ const sunLight = new THREE.DirectionalLight(0xffffff, 1.2);
 sunLight.position.set(20, 40, 10);
 scene.add(sunLight);
 
-// --- ENTORNO ---
-const floor = new THREE.Mesh(new THREE.PlaneGeometry(120, 320), new THREE.MeshStandardMaterial({color: 0x142914, roughness: 0.9}));
-floor.rotation.x = -Math.PI/2;
+// ─── ENTORNO ──────────────────────────────────────────────────────────────────
+const floor = new THREE.Mesh(
+    new THREE.PlaneGeometry(120, 320),
+    new THREE.MeshStandardMaterial({ color: 0x142914, roughness: 0.9 })
+);
+floor.rotation.x = -Math.PI / 2;
 scene.add(floor);
 
-// Bosque denso (90 Árboles)
-const treeGroup = new THREE.Group();
-const trunkGeo = new THREE.CylinderGeometry(0.15, 0.3, 3.5, 5);
-const trunkMat = new THREE.MeshStandardMaterial({color: 0x3d2511});
+const trunkGeo  = new THREE.CylinderGeometry(0.15, 0.3, 3.5, 5);
+const trunkMat  = new THREE.MeshStandardMaterial({ color: 0x3d2511 });
 const leavesGeo = new THREE.SphereGeometry(1.5, 4, 4);
-const leavesMat = new THREE.MeshStandardMaterial({color: 0x0f6b00});
+const leavesMat = new THREE.MeshStandardMaterial({ color: 0x0f6b00 });
 
-for(let i=0; i<90; i++){
+for (let i = 0; i < 90; i++) {
     const tree = new THREE.Group();
-    const trunk = new THREE.Mesh(trunkGeo, trunkMat);
+    tree.add(new THREE.Mesh(trunkGeo, trunkMat));
     const leaves = new THREE.Mesh(leavesGeo, leavesMat);
     leaves.position.y = 2.6;
-    tree.add(trunk, leaves);
-    
-    const side = Math.random() > 0.5 ? 1 : -1;
-    const x = side * (9 + Math.random() * 35);
-    const z = -Math.random() * 160 + 10;
+    tree.add(leaves);
+    const side  = Math.random() > 0.5 ? 1 : -1;
     const scale = 0.8 + Math.random() * 0.5;
-    
-    tree.position.set(x, 1.75 * scale, z);
-    tree.scale.set(scale, scale, scale);
-    treeGroup.add(tree);
+    tree.position.set(side * (9 + Math.random() * 35), 1.75 * scale, -Math.random() * 160 + 10);
+    tree.scale.setScalar(scale);
+    scene.add(tree);
 }
-scene.add(treeGroup);
 
-// Castillo
-const castle = new THREE.Mesh(new THREE.BoxGeometry(18, 7, 4), new THREE.MeshStandardMaterial({color: 0x444444}));
+const castle = new THREE.Mesh(
+    new THREE.BoxGeometry(18, 7, 4),
+    new THREE.MeshStandardMaterial({ color: 0x444444 })
+);
 castle.position.set(0, 3.5, 14);
 scene.add(castle);
 
-// --- SISTEMA DE LLUVIA (PARTÍCULAS) ---
+// ─── LLUVIA ───────────────────────────────────────────────────────────────────
 const rainCount = 400;
-const rainGeo = new THREE.BufferGeometry();
 const rainPositions = new Float32Array(rainCount * 3);
-for(let i=0; i<rainCount*3; i+=3) {
-    rainPositions[i] = (Math.random() - 0.5) * 40;
+for (let i = 0; i < rainCount * 3; i += 3) {
+    rainPositions[i]   = (Math.random() - 0.5) * 40;
     rainPositions[i+1] = Math.random() * 30;
     rainPositions[i+2] = (Math.random() - 0.5) * 160 - 40;
 }
+const rainGeo = new THREE.BufferGeometry();
 rainGeo.setAttribute('position', new THREE.BufferAttribute(rainPositions, 3));
-const rainMat = new THREE.PointsMaterial({color: 0x7799dd, size: 0.12, transparent: true, opacity: 0});
+const rainMat = new THREE.PointsMaterial({ color: 0x7799dd, size: 0.12, transparent: true, opacity: 0 });
 const rainParticles = new THREE.Points(rainGeo, rainMat);
 scene.add(rainParticles);
 
-// --- VARIABLES CONFIGURABLES DE JUEGO ---
+// ─── AUDIO ────────────────────────────────────────────────────────────────────
+let audioCtx = null;
+function getAudio() {
+    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    return audioCtx;
+}
+function playSfx(f, d) {
+    try {
+        const ctx = getAudio();
+        if (ctx.state === 'suspended') ctx.resume();
+        const o = ctx.createOscillator(), g = ctx.createGain();
+        o.connect(g); g.connect(ctx.destination);
+        o.frequency.setValueAtTime(f, ctx.currentTime);
+        g.gain.setValueAtTime(0.06, ctx.currentTime);
+        g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + d);
+        o.start(); o.stop(ctx.currentTime + d);
+    } catch(e) {}
+}
+
+// ─── ESTADO DEL JUEGO ─────────────────────────────────────────────────────────
 let score = 0, castleLife = 20, wave = 1, enemiesKilled = 0, enemiesPerWave = 10;
 let bossActive = false, bossLife = 40, bossMesh = null;
 let isGameRunning = false;
-let gameTime = 0;
-let shakeIntensity = 0;
-let bossAttackingCastle = false;
-let bossJumpTimer = 0;
+let gameTime = 0, shakeIntensity = 0;
+let bossAttackingCastle = false, bossJumpTimer = 0;
 
-// --- NUEVO GESTOR DE ENTRADA TÁCTIL UNIFICADO ---
+// ─── CONTROLES ────────────────────────────────────────────────────────────────
 const joyContainer = document.getElementById('joystick-container');
-const joyHandle = document.getElementById('joystick-handle');
-const fireBtn = document.getElementById('fire-btn');
+const joyHandle    = document.getElementById('joystick-handle');
+const fireBtn      = document.getElementById('fire-btn');
 
-let moveX = 0;
-let pitch = 0, yaw = 0;
-
-// Variables de asignación de IDs de dedos activos
-let activeJoystickId = null;
-let activeLookId = null;
+let moveX = 0, pitch = 0, yaw = 0;
+let activeJoystickId = null, activeLookId = null;
 let lastLookX = 0, lastLookY = 0;
 let fireIntervalId = null;
 
-// Captura unificada en el documento para evitar pérdidas de rastro
-document.addEventListener('touchstart', (e) => {
+// Registrar eventos DIRECTAMENTE en los elementos (evita que el canvas los absorba)
+joyContainer.addEventListener('touchstart', (e) => {
+    e.preventDefault();
     if (!isGameRunning) return;
-
-    for (let i = 0; i < e.changedTouches.length; i++) {
-        const touch = e.changedTouches[i];
-        const targetId = touch.target.id;
-        const screenX = touch.clientX;
-
-        // Caso 1: Toca el Joystick
-        if ((targetId === 'joystick-container' || targetId === 'joystick-handle') && activeJoystickId === null) {
-            activeJoystickId = touch.identifier;
-            updateJoystick(touch);
-        }
-        // Caso 2: Toca el Botón de Disparo (Inicia ráfaga y puede arrastrar mirada)
-        else if (targetId === 'fire-btn') {
-            if (!fireIntervalId) {
-                fireBullet();
-                fireIntervalId = setInterval(fireBullet, 150);
-            }
-            if (activeLookId === null) {
-                activeLookId = touch.identifier;
-                lastLookX = touch.clientX;
-                lastLookY = touch.clientY;
-            }
-        }
-        // Caso 3: Toca la parte derecha libre de la pantalla para mirar
-        else if (screenX > window.innerWidth / 2 && activeLookId === null) {
-            activeLookId = touch.identifier;
-            lastLookX = touch.clientX;
-            lastLookY = touch.clientY;
-        }
+    const touch = e.changedTouches[0];
+    if (activeJoystickId === null) {
+        activeJoystickId = touch.identifier;
+        updateJoystick(touch);
     }
-}, { passive: true });
+}, { passive: false });
 
-document.addEventListener('touchmove', (e) => {
+joyContainer.addEventListener('touchmove', (e) => {
+    e.preventDefault();
     if (!isGameRunning) return;
-
-    for (let i = 0; i < e.touches.length; i++) {
-        const touch = e.touches[i];
-
-        // Mover Joystick
-        if (touch.identifier === activeJoystickId) {
-            updateJoystick(touch);
-        }
-        // Mover Mirada (Sea desde la pantalla libre o arrastrando el botón de disparo)
-        else if (touch.identifier === activeLookId) {
-            const dx = touch.clientX - lastLookX;
-            const dy = touch.clientY - lastLookY;
-
-            // Sensibilidad alta balanceada
-            const sensitivity = 0.015;
-            yaw -= dx * sensitivity;
-            pitch -= dy * sensitivity;
-            pitch = Math.max(-Math.PI / 2.4, Math.min(Math.PI / 2.4, pitch));
-
-            playerBase.rotation.y = yaw;
-            camera.rotation.x = pitch;
-
-            lastLookX = touch.clientX;
-            lastLookY = touch.clientY;
-        }
+    for (let t of e.changedTouches) {
+        if (t.identifier === activeJoystickId) updateJoystick(t);
     }
-}, { passive: true });
+}, { passive: false });
 
-document.addEventListener('touchend', (e) => {
-    for (let i = 0; i < e.changedTouches.length; i++) {
-        const touch = e.changedTouches[i];
-
-        if (touch.identifier === activeJoystickId) {
+joyContainer.addEventListener('touchend', (e) => {
+    e.preventDefault();
+    for (let t of e.changedTouches) {
+        if (t.identifier === activeJoystickId) {
             activeJoystickId = null;
-            joyHandle.style.transform = `translate(0px, 0px)`;
+            joyHandle.style.transform = 'translate(0px,0px)';
             moveX = 0;
         }
-        
-        if (touch.identifier === activeLookId) {
-            activeLookId = null;
-        }
     }
+}, { passive: false });
 
-    // Si ya no hay dedos tocando el botón de fuego, apagar ráfaga
-    let overFire = false;
-    for (let i = 0; i < e.touches.length; i++) {
-        if (e.touches[i].target.id === 'fire-btn') overFire = true;
+// Botón de fuego
+fireBtn.addEventListener('touchstart', (e) => {
+    e.preventDefault();
+    if (!isGameRunning) return;
+    const touch = e.changedTouches[0];
+    if (!fireIntervalId) {
+        fireBullet();
+        fireIntervalId = setInterval(fireBullet, 150);
     }
-    if (!overFire && fireIntervalId) {
+    if (activeLookId === null) {
+        activeLookId = touch.identifier;
+        lastLookX = touch.clientX;
+        lastLookY = touch.clientY;
+    }
+}, { passive: false });
+
+fireBtn.addEventListener('touchmove', (e) => {
+    e.preventDefault();
+    if (!isGameRunning) return;
+    for (let t of e.changedTouches) {
+        if (t.identifier === activeLookId) applyLook(t);
+    }
+}, { passive: false });
+
+fireBtn.addEventListener('touchend', (e) => {
+    e.preventDefault();
+    for (let t of e.changedTouches) {
+        if (t.identifier === activeLookId) activeLookId = null;
+    }
+    if (e.touches.length === 0 || !Array.from(e.touches).some(t => t.target === fireBtn)) {
         clearInterval(fireIntervalId);
         fireIntervalId = null;
     }
-});
+}, { passive: false });
+
+// Zona derecha libre (look)
+const lookZone = renderer.domElement;
+lookZone.addEventListener('touchstart', (e) => {
+    e.preventDefault();
+    if (!isGameRunning) return;
+    for (let t of e.changedTouches) {
+        if (activeLookId === null && t.clientX > window.innerWidth / 2) {
+            activeLookId = t.identifier;
+            lastLookX = t.clientX;
+            lastLookY = t.clientY;
+        }
+    }
+}, { passive: false });
+
+lookZone.addEventListener('touchmove', (e) => {
+    e.preventDefault();
+    if (!isGameRunning) return;
+    for (let t of e.changedTouches) {
+        if (t.identifier === activeLookId) applyLook(t);
+    }
+}, { passive: false });
+
+lookZone.addEventListener('touchend', (e) => {
+    e.preventDefault();
+    for (let t of e.changedTouches) {
+        if (t.identifier === activeLookId) activeLookId = null;
+    }
+}, { passive: false });
+
+function applyLook(touch) {
+    const dx = touch.clientX - lastLookX;
+    const dy = touch.clientY - lastLookY;
+    yaw   -= dx * 0.015;
+    pitch -= dy * 0.015;
+    pitch = Math.max(-Math.PI / 2.4, Math.min(Math.PI / 2.4, pitch));
+    playerBase.rotation.y = yaw;
+    camera.rotation.x = pitch;
+    lastLookX = touch.clientX;
+    lastLookY = touch.clientY;
+}
 
 function updateJoystick(touch) {
     const rect = joyContainer.getBoundingClientRect();
     const centerX = rect.left + rect.width / 2;
     let dx = touch.clientX - centerX;
-    const maxRadius = rect.width / 2;
-
-    dx = Math.max(-maxRadius, Math.min(maxRadius, dx));
+    const maxR = rect.width / 2;
+    dx = Math.max(-maxR, Math.min(maxR, dx));
     joyHandle.style.transform = `translateX(${dx}px)`;
-    moveX = dx / maxRadius; // Asigna el valor de velocidad lateral
+    moveX = dx / maxR;
 }
 
-// --- SISTEMA DE BALAS ---
+// ─── BALAS ────────────────────────────────────────────────────────────────────
 const bullets = [];
-function fireBullet(){
-    if(!isGameRunning) return;
-    const b = new THREE.Mesh(new THREE.SphereGeometry(0.14, 4, 4), new THREE.MeshBasicMaterial({color: 0xffea00}));
+function fireBullet() {
+    if (!isGameRunning) return;
+    const b = new THREE.Mesh(
+        new THREE.SphereGeometry(0.14, 4, 4),
+        new THREE.MeshBasicMaterial({ color: 0xffea00 })
+    );
     b.position.copy(playerBase.position);
-    
     const dir = new THREE.Vector3();
     camera.getWorldDirection(dir);
     b.userData.dir = dir.normalize();
-    
     bullets.push(b);
     scene.add(b);
     playSfx(580, 0.06);
 }
 
-// --- AUDIO SINTETIZADO ---
-const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-function playSfx(f, d){
-    if(audioCtx.state === 'suspended') audioCtx.resume();
-    const o = audioCtx.createOscillator(), g = audioCtx.createGain();
-    o.connect(g); g.connect(audioCtx.destination);
-    o.frequency.setValueAtTime(f, audioCtx.currentTime);
-    g.gain.setValueAtTime(0.06, audioCtx.currentTime);
-    g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + d);
-    o.start(); o.stop(audioCtx.currentTime + d);
-}
-
-// --- LOGICA DE ENEMIGOS ---
+// ─── ENEMIGOS ─────────────────────────────────────────────────────────────────
 const enemies = [];
-function spawnEnemy(){
-    if(!isGameRunning || bossActive || enemiesKilled >= enemiesPerWave) return;
-    const e = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.9, 0.9), new THREE.MeshStandardMaterial({color: 0xdd2222, roughness: 0.5}));
-    e.position.set((Math.random()-0.5)*13, 0.45, -80);
-    enemies.push(e);
-    scene.add(e);
-}
-setInterval(spawnEnemy, 950);
+let spawnTimer = null;
 
-function spawnBoss(){
+function startSpawning() {
+    spawnTimer = setInterval(() => {
+        if (!isGameRunning || bossActive || enemiesKilled >= enemiesPerWave) return;
+        const e = new THREE.Mesh(
+            new THREE.BoxGeometry(0.9, 0.9, 0.9),
+            new THREE.MeshStandardMaterial({ color: 0xdd2222, roughness: 0.5 })
+        );
+        e.position.set((Math.random() - 0.5) * 13, 0.45, -80);
+        enemies.push(e);
+        scene.add(e);
+    }, 950);
+}
+
+function spawnBoss() {
     bossActive = true; bossLife = 40; bossAttackingCastle = false;
-    bossMesh = new THREE.Mesh(new THREE.BoxGeometry(4, 4, 4), new THREE.MeshStandardMaterial({color: 0xaa00ff, roughness: 0.4}));
+    bossMesh = new THREE.Mesh(
+        new THREE.BoxGeometry(4, 4, 4),
+        new THREE.MeshStandardMaterial({ color: 0xaa00ff, roughness: 0.4 })
+    );
     bossMesh.position.set(0, 2, -80);
     scene.add(bossMesh);
     document.getElementById('boss-ui').style.display = 'block';
     updateUI();
 }
 
-// --- ANIMACIÓN MOTOR (LOOP PRINCIPAL) ---
+// ─── UI ───────────────────────────────────────────────────────────────────────
+function updateUI() {
+    document.getElementById('score-text').innerText = `Puntos: ${score}`;
+    document.getElementById('castle-bar').style.width = `${Math.max(0, (castleLife / 20) * 100)}%`;
+    document.getElementById('wave-bar').style.width = `${(enemiesKilled / enemiesPerWave) * 100}%`;
+    document.getElementById('wave-text').innerText = `Oleada: ${wave}`;
+    if (bossActive) document.getElementById('boss-bar').style.width = `${(bossLife / 40) * 100}%`;
+}
+
+function endGame() {
+    isGameRunning = false;
+    clearInterval(fireIntervalId);
+    clearInterval(spawnTimer);
+    setTimeout(() => {
+        alert("🔥 EL CASTILLO HA SIDO DESTRUIDO 🔥\nPuntaje Final: " + score);
+        location.reload();
+    }, 100);
+}
+
+// ─── LOOP PRINCIPAL ───────────────────────────────────────────────────────────
 function update() {
-    if(!isGameRunning) return;
+    if (!isGameRunning) return;
 
     gameTime += 0.016;
 
-    // 🌤️ CICLO DÍA / NOCHE (30s y 30s)
-    const cyclePos = (gameTime % 60) / 60; 
+    // Ciclo día/noche
+    const cyclePos = (gameTime % 60) / 60;
     const dayFactor = Math.sin(cyclePos * Math.PI * 2);
-
-    const intensity = Math.max(0.15, (dayFactor + 1) / 2); 
-    sunLight.intensity = intensity * 1.2;
+    const intensity = Math.max(0.15, (dayFactor + 1) / 2);
+    sunLight.intensity  = intensity * 1.2;
     hemiLight.intensity = Math.max(0.2, intensity * 0.7);
-    
     const skyColor = new THREE.Color(0x1a2a3a).multiplyScalar(intensity);
     scene.background = skyColor;
-    scene.fog.color = skyColor;
+    scene.fog.color   = skyColor;
 
     const envText = document.getElementById('env-text');
-    if (dayFactor > 0.3) envText.innerText = "Tiempo: Día ☀️";
+    if      (dayFactor >  0.3) envText.innerText = "Tiempo: Día ☀️";
     else if (dayFactor < -0.3) envText.innerText = "Tiempo: Noche 🌙";
-    else envText.innerText = "Tiempo: Transición Climatológica 🌓";
+    else                        envText.innerText = "Tiempo: Transición 🌓";
 
-    // 🌧️ LLUVIA CADA 2 DIAS
-    const isRainyPeriod = (gameTime % 120) > 60;
-    if(isRainyPeriod) {
+    // Lluvia cada 2 ciclos
+    const isRainy = (gameTime % 120) > 60;
+    if (isRainy) {
         rainMat.opacity = Math.min(0.6, rainMat.opacity + 0.01);
-        const positions = rainParticles.geometry.attributes.position.array;
-        for(let i=1; i<positions.length; i+=3) {
-            positions[i] -= 0.45;
-            if(positions[i] < 0) positions[i] = 25 + Math.random()*5;
+        const pos = rainParticles.geometry.attributes.position.array;
+        for (let i = 1; i < pos.length; i += 3) {
+            pos[i] -= 0.45;
+            if (pos[i] < 0) pos[i] = 25 + Math.random() * 5;
         }
         rainParticles.geometry.attributes.position.needsUpdate = true;
         sunLight.intensity *= 0.5;
@@ -388,109 +431,107 @@ function update() {
         rainMat.opacity = Math.max(0, rainMat.opacity - 0.01);
     }
 
-    // TERREMOTO CÁMARA
-    if(shakeIntensity > 0) {
-        camera.position.set((Math.random() - 0.5) * shakeIntensity, (Math.random() - 0.5) * shakeIntensity, 0);
+    // Shake
+    if (shakeIntensity > 0) {
+        camera.position.set(
+            (Math.random() - 0.5) * shakeIntensity,
+            (Math.random() - 0.5) * shakeIntensity, 0
+        );
         shakeIntensity *= 0.9;
     } else {
         camera.position.set(0, 0, 0);
     }
 
-    // Movimiento Joystick lateral
+    // Movimiento lateral
     playerBase.position.x += moveX * 0.16;
     playerBase.position.x = Math.max(-7.8, Math.min(7.8, playerBase.position.x));
 
     // Balas
-    bullets.forEach((b, i) => {
+    for (let i = bullets.length - 1; i >= 0; i--) {
+        const b = bullets[i];
         b.position.addScaledVector(b.userData.dir, 1.4);
-        if(b.position.z < -110 || b.position.z > 20) { scene.remove(b); bullets.splice(i, 1); }
-    });
+        if (b.position.z < -110 || b.position.z > 20) {
+            scene.remove(b); bullets.splice(i, 1);
+        }
+    }
 
-    // Enemigos comunes
-    enemies.forEach((e, i) => {
+    // Enemigos
+    for (let i = enemies.length - 1; i >= 0; i--) {
+        const e = enemies[i];
         e.position.z += 0.16;
-        if(e.position.z > 13) {
+        if (e.position.z > 13) {
             scene.remove(e); enemies.splice(i, 1);
             castleLife--; updateUI();
             playSfx(100, 0.2);
-            if(castleLife <= 0) endGame();
+            if (castleLife <= 0) { endGame(); return; }
         }
-    });
+    }
 
-    // Jefe final veloz y saltarín
-    if(bossActive && bossMesh){
-        if(!bossAttackingCastle) {
-            bossMesh.position.z += 0.085; // Más veloz
-            if(bossMesh.position.z > 11) bossAttackingCastle = true;
+    // Jefe
+    if (bossActive && bossMesh) {
+        if (!bossAttackingCastle) {
+            bossMesh.position.z += 0.085;
+            if (bossMesh.position.z > 11) bossAttackingCastle = true;
         } else {
             bossJumpTimer += 0.25;
-            bossMesh.position.y = 2 + Math.abs(Math.sin(bossJumpTimer)) * 2.5; 
-            
-            if(bossMesh.position.y < 2.2) {
+            bossMesh.position.y = 2 + Math.abs(Math.sin(bossJumpTimer)) * 2.5;
+            if (bossMesh.position.y < 2.2) {
                 shakeIntensity = 0.35;
                 playSfx(80, 0.12);
-                castleLife -= 0.09; 
+                castleLife -= 0.09;
                 updateUI();
-                if(castleLife <= 0) endGame();
+                if (castleLife <= 0) { endGame(); return; }
             }
         }
     }
 
-    // Impactos
-    bullets.forEach((b, bi) => {
-        if(bossActive && bossMesh && b.position.distanceTo(bossMesh.position) < 2.4){
-            scene.remove(b); bullets.splice(bi, 1);
-            bossLife--; updateUI();
-            playSfx(220, 0.08);
-            if(bossLife <= 0){
-                scene.remove(bossMesh); bossActive = false; bossAttackingCastle = false;
+    // Colisiones
+    for (let bi = bullets.length - 1; bi >= 0; bi--) {
+        const b = bullets[bi];
+        let hit = false;
+
+        // vs jefe
+        if (bossActive && bossMesh && b.position.distanceTo(bossMesh.position) < 2.4) {
+            scene.remove(b); bullets.splice(bi, 1); hit = true;
+            bossLife--; updateUI(); playSfx(220, 0.08);
+            if (bossLife <= 0) {
+                scene.remove(bossMesh); bossActive = false; bossAttackingCastle = false; bossMesh = null;
                 score += 50; enemiesKilled = 0; wave++; enemiesPerWave += 5; updateUI();
                 document.getElementById('boss-ui').style.display = 'none';
             }
-            return;
+            continue;
         }
-        enemies.forEach((e, ei) => {
-            if(b.position.distanceTo(e.position) < 0.95){
-                scene.remove(b); scene.remove(e);
+
+        // vs enemigos
+        for (let ei = enemies.length - 1; ei >= 0 && !hit; ei--) {
+            if (b.position.distanceTo(enemies[ei].position) < 0.95) {
+                scene.remove(b); scene.remove(enemies[ei]);
                 bullets.splice(bi, 1); enemies.splice(ei, 1);
-                score++; enemiesKilled++; updateUI();
-                if(enemiesKilled >= enemiesPerWave) spawnBoss();
+                score++; enemiesKilled++; updateUI(); hit = true;
+                if (enemiesKilled >= enemiesPerWave) spawnBoss();
             }
-        });
-    });
+        }
+    }
 }
 
-function updateUI(){
-    document.getElementById('score-text').innerText = `Puntos: ${score}`;
-    document.getElementById('castle-bar').style.width = `${Math.max(0, (castleLife/20)*100)}%`;
-    document.getElementById('wave-bar').style.width = `${(enemiesKilled/enemiesPerWave)*100}%`;
-    document.getElementById('wave-text').innerText = `Oleada: ${wave}`;
-    if(bossActive) document.getElementById('boss-bar').style.width = `${(bossLife/40)*100}%`;
-}
-
-function endGame(){
-    isGameRunning = false;
-    clearInterval(fireIntervalId);
-    alert("🔥 EL CASTILLO HA SIDO DESTRUIDO 🔥\nPuntaje Final: " + score);
-    location.reload();
-}
-
-function animate(){
+function animate() {
     requestAnimationFrame(animate);
     update();
     renderer.render(scene, camera);
 }
 
-document.getElementById('start-btn').addEventListener('click', () => {
+// ─── INICIO ───────────────────────────────────────────────────────────────────
+window.startGame = function() {
     document.getElementById('tutorial-overlay').style.display = 'none';
-    if(audioCtx.state === 'suspended') audioCtx.resume();
     isGameRunning = true;
-});
+    startSpawning();
+    try { getAudio().resume(); } catch(e) {}
+};
 
 animate();
 
 window.addEventListener('resize', () => {
-    camera.aspect = window.innerWidth/window.innerHeight;
+    camera.aspect = window.innerWidth / window.innerHeight;
     camera.updateProjectionMatrix();
     renderer.setSize(window.innerWidth, window.innerHeight);
 });
