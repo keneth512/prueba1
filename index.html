@@ -108,9 +108,9 @@ scene.background = new THREE.Color(0x3a5f8a);
 scene.fog = new THREE.Fog(0x3a5f8a, 40, 140);
 
 const camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
-const renderer = new THREE.WebGLRenderer({ antialias: false }); // antialias off = mejor rendimiento
+const renderer = new THREE.WebGLRenderer({ antialias: false });
 renderer.setSize(window.innerWidth, window.innerHeight);
-renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5)); // cap 1.5 en vez de 2
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
 document.body.appendChild(renderer.domElement);
 
 const playerBase = new THREE.Object3D();
@@ -123,7 +123,6 @@ const hemiLight = new THREE.HemisphereLight(0xaaddff, 0x224422, 1.0);
 scene.add(hemiLight);
 const sunLight = new THREE.DirectionalLight(0xfff5cc, 1.6);
 sunLight.position.set(20, 40, 10);
-// Sombras desactivadas — gran ganancia de rendimiento
 scene.add(sunLight);
 const moonLight = new THREE.DirectionalLight(0x3355aa, 0.0);
 moonLight.position.set(-20, 30, -10);
@@ -132,12 +131,11 @@ scene.add(moonLight);
 // ─── SUELO ────────────────────────────────────────────────────────────────────
 const floor = new THREE.Mesh(
     new THREE.PlaneGeometry(120, 320),
-    new THREE.MeshLambertMaterial({ color: 0x1a3d1a }) // Lambert más barato que Standard
+    new THREE.MeshLambertMaterial({ color: 0x1a3d1a })
 );
 floor.rotation.x = -Math.PI/2;
 scene.add(floor);
 
-// Parches de variedad visual (material compartido)
 const patchMatA = new THREE.MeshLambertMaterial({ color: 0x2a5c1a });
 const patchMatB = new THREE.MeshLambertMaterial({ color: 0x3a2a10 });
 for (let i = 0; i < 30; i++) {
@@ -150,9 +148,8 @@ for (let i = 0; i < 30; i++) {
     scene.add(patch);
 }
 
-// ─── ÁRBOLES (InstancedMesh — capacidad exacta sin overflow) ─────────────────
+// ─── ÁRBOLES (InstancedMesh optimizado) ───────────────────────────────────────
 const TREE_COUNT = 90;
-// Cada árbol tiene 2 capas de hojas → total TREE_COUNT*2 instancias de hoja
 const trunkInst = new THREE.InstancedMesh(
     new THREE.CylinderGeometry(0.12, 0.28, 3.5, 5),
     new THREE.MeshLambertMaterial({ color: 0x4a2e10 }),
@@ -161,9 +158,8 @@ const trunkInst = new THREE.InstancedMesh(
 const leavesInst = new THREE.InstancedMesh(
     new THREE.SphereGeometry(1.5, 4, 4),
     new THREE.MeshLambertMaterial({ color: 0x1a6b08 }),
-    TREE_COUNT * 2  // capacidad exacta: 2 capas × 90 árboles = 180
+    TREE_COUNT * 2
 );
-// Color por instancia de hoja (verde variado)
 const leafColorPalette = [0x0d5e00, 0x145c10, 0x1a6b08, 0x0b4a1a];
 const _leafColor = new THREE.Color();
 
@@ -195,7 +191,7 @@ for (let i = 0; i < TREE_COUNT; i++) {
     leavesInst.setColorAt(leafIdx, _leafColor);
     leafIdx++;
 
-    // Capa superior
+    // Capa superior de hojas
     _dummy.position.set(x, (3.4 + 1.75) * scale, z);
     _dummy.scale.setScalar(scale * 0.9);
     _dummy.updateMatrix();
@@ -235,22 +231,21 @@ gate.position.set(0, 1.75, 14);
 scene.add(gate);
 
 // ─── LLUVIA OPTIMIZADA ────────────────────────────────────────────────────────
-// Reducida a 200 gotas (antes 600), posiciones solo frente al jugador
 const RAIN_COUNT = 200;
 const rainPos = new Float32Array(RAIN_COUNT * 3);
 for (let i = 0; i < RAIN_COUNT * 3; i += 3) {
     rainPos[i]   = (Math.random()-0.5) * 30;
     rainPos[i+1] = Math.random() * 20;
-    rainPos[i+2] = (Math.random()-0.5) * 60 - 20; // zona más estrecha
+    rainPos[i+2] = (Math.random()-0.5) * 60 - 20;
 }
 const rainGeo = new THREE.BufferGeometry();
 rainGeo.setAttribute('position', new THREE.BufferAttribute(rainPos, 3));
 const rainMat = new THREE.PointsMaterial({ color: 0x99bbff, size: 0.12, transparent: true, opacity: 0 });
 const rainParticles = new THREE.Points(rainGeo, rainMat);
 scene.add(rainParticles);
-let rainVisible = false; // solo actualiza GPU cuando es necesario
+let rainVisible = false;
 
-// ─── CHISPAS DE IMPACTO (pool reutilizable) ───────────────────────────────────
+// ─── CHISPAS DE IMPACTO ───────────────────────────────────────────────────────
 const SPARK_MAX = 24;
 const sparkPool = [];
 const sparkGeo = new THREE.SphereGeometry(0.08, 3, 3);
@@ -282,7 +277,6 @@ function spawnSpark(pos) {
 
 // ─── GRIETAS DEL JEFE ─────────────────────────────────────────────────────────
 const crackLines = [];
-// Grieta CORTA (aterrizaje normal)
 function spawnCrack(x, z) {
     const group = new THREE.Group();
     for (let i = 0; i < 5; i++) {
@@ -300,11 +294,10 @@ function spawnCrack(x, z) {
     crackLines.push(group);
     scene.add(group);
 }
-// Grieta LARGA que llega hasta el castillo (cada cuarto de vida)
 function spawnLongCrack(bx, bz) {
     const group = new THREE.Group();
     const steps = 18;
-    const totalLen = Math.abs(14 - bz); // desde jefe hasta castillo z=14
+    const totalLen = Math.abs(14 - bz);
     for (let i = 0; i < steps; i++) {
         const t = i / steps;
         const segLen = 1.2 + Math.random() * 1.8;
@@ -313,7 +306,7 @@ function spawnLongCrack(bx, bz) {
             new THREE.MeshBasicMaterial({ color: 0xff2200, side: THREE.DoubleSide })
         );
         seg.rotation.x = -Math.PI/2;
-        seg.rotation.z = (Math.random()-0.5) * 0.4; // casi recto
+        seg.rotation.z = (Math.random()-0.5) * 0.4;
         seg.position.set(
             bx + (Math.random()-0.5)*1.5,
             0.06,
@@ -355,14 +348,12 @@ let bossActive = false, bossLife = 80, bossMesh = null;
 let isGameRunning = false;
 let gameTime = 0, dt = 0.016, shakeIntensity = 0;
 
-// Jefe: máquina de estados clara
-// estados: 'emerging' | 'walking' | 'idle' | 'jumping' | 'landing' | 'longJump'
 let bossState = 'walking';
 let bossStateTimer = 0;
 let bossJumpPhase = 0;
-let bossSpeed = 0.07;       // aumenta con cada cuarto de vida perdido
-let bossQuarterHits = 0;    // cuántos cuartos de vida se han activado
-let bossEmergingDepth = 0;  // animación de emergencia del suelo
+let bossSpeed = 0.07;
+let bossQuarterHits = 0;
+let bossEmergingDepth = 0;
 
 const crackFlash = document.getElementById('crack-flash');
 let flashTimer = 0;
@@ -462,7 +453,6 @@ function fireBullet() {
 }
 
 // ─── ENEMIGOS ─────────────────────────────────────────────────────────────────
-// Materiales compartidos para todos los enemigos → menos draw calls
 const eMat = {
     body:   new THREE.MeshLambertMaterial({ color: 0x8B1A1A }),
     skin:   new THREE.MeshLambertMaterial({ color: 0xd4a574 }),
@@ -470,7 +460,6 @@ const eMat = {
     pants:  new THREE.MeshLambertMaterial({ color: 0x3a3a3a }),
     eye:    new THREE.MeshBasicMaterial({ color: 0xff3300 }),
 };
-// Geometrías compartidas
 const eGeo = {
     torso:  new THREE.BoxGeometry(0.55, 0.75, 0.3),
     head:   new THREE.SphereGeometry(0.22, 6, 6),
@@ -482,31 +471,12 @@ const eGeo = {
 
 function makeEnemy() {
     const g = new THREE.Group();
-
-    const body = new THREE.Mesh(eGeo.torso, eMat.body);
-    body.position.y = 0.9; g.add(body);            // [0] torso
-
-    const head = new THREE.Mesh(eGeo.head, eMat.skin);
-    head.position.y = 1.55; g.add(head);           // [1] cabeza
-
-    const helmet = new THREE.Mesh(eGeo.helmet, eMat.helmet);
-    helmet.position.y = 1.62; g.add(helmet);       // [2] casco
-
-    for (const lx of [-0.14, 0.14]) {              // [3][4] piernas
-        const leg = new THREE.Mesh(eGeo.leg, eMat.pants);
-        leg.position.set(lx, 0.28, 0); g.add(leg);
-    }
-    for (const ax of [-0.38, 0.38]) {              // [5][6] brazos
-        const arm = new THREE.Mesh(eGeo.arm, eMat.body);
-        arm.position.set(ax, 0.88, 0); g.add(arm);
-    }
-    for (const ex of [-0.08, 0.08]) {              // [7][8] ojos
-        const eye = new THREE.Mesh(eGeo.eye, eMat.eye);
-        eye.position.set(ex, 1.55, 0.21); g.add(eye);
-    }
-
-    // HITBOX unificada: una esfera que cubre TODO el cuerpo (y=0 a y=1.85)
-    // La almacenamos como userData para colisiones → centro en y=0.95 radio=1.0
+    const body = new THREE.Mesh(eGeo.torso, eMat.body); body.position.y = 0.9; g.add(body);
+    const head = new THREE.Mesh(eGeo.head, eMat.skin); head.position.y = 1.55; g.add(head);
+    const helmet = new THREE.Mesh(eGeo.helmet, eMat.helmet); helmet.position.y = 1.62; g.add(helmet);
+    for (const lx of [-0.14, 0.14]) { const leg = new THREE.Mesh(eGeo.leg, eMat.pants); leg.position.set(lx, 0.28, 0); g.add(leg); }
+    for (const ax of [-0.38, 0.38]) { const arm = new THREE.Mesh(eGeo.arm, eMat.body); arm.position.set(ax, 0.88, 0); g.add(arm); }
+    for (const ex of [-0.08, 0.08]) { const eye = new THREE.Mesh(eGeo.eye, eMat.eye); eye.position.set(ex, 1.55, 0.21); g.add(eye); }
     g.userData.hitRadius = 1.0;
     g.userData.hitCenterY = 0.92;
     g.userData.walkPhase = Math.random() * Math.PI * 2;
@@ -517,6 +487,7 @@ const enemies = [];
 let spawnTimer = null;
 function startSpawning() {
     spawnTimer = setInterval(() => {
+        // Bloquear generador común si el jefe está activo o la oleada está lista
         if (!isGameRunning || bossActive || enemiesKilled >= enemiesPerWave) return;
         const e = makeEnemy();
         e.position.set((Math.random()-0.5)*14, 0, -55);
@@ -527,60 +498,25 @@ function startSpawning() {
 // ─── JEFE ─────────────────────────────────────────────────────────────────────
 function makeBoss() {
     const g = new THREE.Group();
-
-    const body = new THREE.Mesh(
-        new THREE.BoxGeometry(3, 3.5, 2),
-        new THREE.MeshLambertMaterial({ color: 0x6600bb })
-    );
-    body.position.y = 2.5; g.add(body);
-
-    const head = new THREE.Mesh(
-        new THREE.SphereGeometry(1.0, 8, 8),
-        new THREE.MeshLambertMaterial({ color: 0x440088 })
-    );
-    head.position.y = 5.0; g.add(head);
-
+    const body = new THREE.Mesh(new THREE.BoxGeometry(3, 3.5, 2), new THREE.MeshLambertMaterial({ color: 0x6600bb })); body.position.y = 2.5; g.add(body);
+    const head = new THREE.Mesh(new THREE.SphereGeometry(1.0, 8, 8), new THREE.MeshLambertMaterial({ color: 0x440088 })); head.position.y = 5.0; g.add(head);
     for (const hx of [-0.5, 0.5]) {
-        const horn = new THREE.Mesh(
-            new THREE.ConeGeometry(0.18, 1.0, 5),
-            new THREE.MeshLambertMaterial({ color: 0xff2200 })
-        );
-        horn.position.set(hx, 6.0, 0);
-        horn.rotation.z = hx > 0 ? 0.3 : -0.3;
-        g.add(horn);
+        const horn = new THREE.Mesh(new THREE.ConeGeometry(0.18, 1.0, 5), new THREE.MeshLambertMaterial({ color: 0xff2200 }));
+        horn.position.set(hx, 6.0, 0); horn.rotation.z = hx > 0 ? 0.3 : -0.3; g.add(horn);
     }
     for (const ex of [-0.35, 0.35]) {
-        const eye = new THREE.Mesh(
-            new THREE.SphereGeometry(0.18, 5, 5),
-            new THREE.MeshBasicMaterial({ color: 0xff6600 })
-        );
+        const eye = new THREE.Mesh(new THREE.SphereGeometry(0.18, 5, 5), new THREE.MeshBasicMaterial({ color: 0xff6600 }));
         eye.position.set(ex, 5.1, 0.9); g.add(eye);
     }
     for (const ax of [-2.0, 2.0]) {
-        const shoulder = new THREE.Mesh(
-            new THREE.SphereGeometry(0.7, 6, 6),
-            new THREE.MeshLambertMaterial({ color: 0x7700cc })
-        );
-        shoulder.position.set(ax, 3.8, 0); g.add(shoulder);
-        const forearm = new THREE.Mesh(
-            new THREE.CylinderGeometry(0.28, 0.18, 2.0, 6),
-            new THREE.MeshLambertMaterial({ color: 0x550099 })
-        );
-        forearm.position.set(ax*1.2, 2.5, 0);
-        forearm.rotation.z = ax > 0 ? 0.5 : -0.5;
-        g.add(forearm);
+        const shoulder = new THREE.Mesh(new THREE.SphereGeometry(0.7, 6, 6), new THREE.MeshLambertMaterial({ color: 0x7700cc })); shoulder.position.set(ax, 3.8, 0); g.add(shoulder);
+        const forearm = new THREE.Mesh(new THREE.CylinderGeometry(0.28, 0.18, 2.0, 6), new THREE.MeshLambertMaterial({ color: 0x550099 }));
+        forearm.position.set(ax*1.2, 2.5, 0); forearm.rotation.z = ax > 0 ? 0.5 : -0.5; g.add(forearm);
     }
     for (const lx of [-0.7, 0.7]) {
-        const leg = new THREE.Mesh(
-            new THREE.CylinderGeometry(0.35, 0.25, 2.2, 6),
-            new THREE.MeshLambertMaterial({ color: 0x440088 })
-        );
-        leg.position.set(lx, 0.8, 0); g.add(leg);
+        const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.25, 2.2, 6), new THREE.MeshLambertMaterial({ color: 0x440088 })); leg.position.set(lx, 0.8, 0); g.add(leg);
     }
-    const aura = new THREE.PointLight(0xaa00ff, 2.5, 14);
-    aura.position.set(0, 3, 0); g.add(aura);
-
-    // HITBOX del jefe: radio 3.5 centrado en y=3 (cubre todo el cuerpo y cabeza)
+    const aura = new THREE.PointLight(0xaa00ff, 2.5, 14); aura.position.set(0, 3, 0); g.add(aura);
     g.userData.hitRadius = 3.5;
     g.userData.hitCenterY = 3.0;
     return g;
@@ -595,12 +531,11 @@ function spawnBoss() {
     bossStateTimer = 0;
     bossJumpPhase = 0;
     bossMesh = makeBoss();
-    // Empieza enterrado: y = -7 (bajo el suelo)
     bossMesh.position.set(0, -7, -40);
     scene.add(bossMesh);
     document.getElementById('boss-ui').style.display = 'block';
     updateUI();
-    playSfx(60, 1.2, 'sawtooth', 0.18); // rugido de aparición
+    playSfx(60, 1.2, 'sawtooth', 0.18);
 }
 
 // ─── UI ───────────────────────────────────────────────────────────────────────
@@ -626,12 +561,9 @@ function endGame() {
     }, 100);
 }
 
-// ─── FUNCIÓN HITBOX UNIFICADA ─────────────────────────────────────────────────
-// Usa esfera que cubre todo el enemigo → bullets de cualquier altura hacen hit
 function bulletHitsObject(bullet, obj) {
     const hr = obj.userData.hitRadius;
     const cy = obj.userData.hitCenterY || 0;
-    // Centro de hitbox en world space
     const cx = obj.position.x;
     const cz = obj.position.z;
     const cyW = obj.position.y + cy;
@@ -641,9 +573,7 @@ function bulletHitsObject(bullet, obj) {
     return (dx*dx + dy*dy + dz*dz) < hr*hr;
 }
 
-// ─── LOOP ─────────────────────────────────────────────────────────────────────
-let lastTime = performance.now();
-// Throttle: actualizar lluvia cada 3 frames
+// ─── LOOP PRINCIPAL ───────────────────────────────────────────────────────────
 let rainFrameCount = 0;
 
 function update() {
@@ -654,13 +584,12 @@ function update() {
     lastTime = now;
     gameTime += dt;
 
-    // Flash fade
     if (flashTimer > 0) {
         flashTimer -= dt;
         if (flashTimer <= 0) crackFlash.style.opacity = '0';
     }
 
-    // ── DÍA/NOCHE ─────────────────────────────────────────────────────────────
+    // ── Día/Noche ──
     const cyclePos = (gameTime % 60) / 60;
     const dayFactor = Math.sin(cyclePos * Math.PI * 2);
     const dayIntensity = Math.max(0.45, (dayFactor+1)/2);
@@ -679,7 +608,7 @@ function update() {
     else if (dayFactor < -0.35) envText.innerText = "Tiempo: Noche 🌙";
     else                         envText.innerText = "Tiempo: Atardecer/Amanecer 🌅";
 
-    // ── LLUVIA OPTIMIZADA ────────────────────────────────────────────────────
+    // ── Lluvia ──
     const isRainy = (gameTime % 120) > 60;
     if (isRainy && !rainVisible) { rainVisible = true; }
     if (!isRainy && rainVisible) {
@@ -689,19 +618,18 @@ function update() {
     if (rainVisible) {
         rainMat.opacity = Math.min(0.6, rainMat.opacity + 0.008);
         sunLight.intensity *= 0.6;
-        // Solo actualizar posiciones cada 3 frames
         rainFrameCount++;
         if (rainFrameCount % 3 === 0) {
             const pos = rainParticles.geometry.attributes.position.array;
             for (let i = 1; i < pos.length; i += 3) {
-                pos[i] -= 1.3; // cae 3x pero solo se actualiza 1/3 de frames → mismo efecto visual
+                pos[i] -= 1.3;
                 if (pos[i] < 0) pos[i] = 20 + Math.random()*5;
             }
             rainParticles.geometry.attributes.position.needsUpdate = true;
         }
     }
 
-    // ── SHAKE ─────────────────────────────────────────────────────────────────
+    // ── Camara Shake ──
     if (shakeIntensity > 0.01) {
         camera.position.set(
             (Math.random()-0.5)*shakeIntensity,
@@ -712,11 +640,10 @@ function update() {
         camera.position.set(0,0,0); shakeIntensity=0;
     }
 
-    // ── JUGADOR ───────────────────────────────────────────────────────────────
     playerBase.position.x += moveX * 0.16;
     playerBase.position.x = Math.max(-7.8, Math.min(7.8, playerBase.position.x));
 
-    // ── BALAS ─────────────────────────────────────────────────────────────────
+    // ── Balas ──
     for (let i = bullets.length-1; i >= 0; i--) {
         const b = bullets[i];
         b.position.addScaledVector(b.userData.dir, 1.5);
@@ -725,7 +652,7 @@ function update() {
         }
     }
 
-    // ── ENEMIGOS ──────────────────────────────────────────────────────────────
+    // ── Enemigos Básicos ──
     for (let i = enemies.length-1; i >= 0; i--) {
         const e = enemies[i];
         e.position.z += 0.15;
@@ -743,15 +670,13 @@ function update() {
         }
     }
 
-    // ── JEFE: MÁQUINA DE ESTADOS ──────────────────────────────────────────────
+    // ── MÁQUINA DE ESTADOS DEL JEFE ──
     if (bossActive && bossMesh) {
         bossStateTimer += dt;
 
         if (bossState === 'emerging') {
-            // Sube desde bajo tierra: de y=-7 a y=0 en ~1.8 segundos
             const progress = Math.min(1, bossStateTimer / 1.8);
             bossMesh.position.y = -7 + 7 * progress;
-            // Efecto de temblor mientras emerge
             bossMesh.rotation.y = Math.sin(bossStateTimer * 12) * 0.08 * (1 - progress);
             if (progress >= 1) {
                 bossMesh.position.y = 0;
@@ -766,12 +691,11 @@ function update() {
             bossMesh.rotation.y = Math.sin(gameTime * 1.8) * 0.12;
             if (bossMesh.position.z >= 9) {
                 bossState = 'idle';
-                bossStateTimer = 1.8; // primera embestida rápida
+                bossStateTimer = 1.8; // Carga rápida inicial
                 bossMesh.position.z = 9;
             }
 
         } else if (bossState === 'idle') {
-            // esperar 2 segundos antes del siguiente salto
             bossMesh.rotation.y += dt * 0.8;
             if (bossStateTimer >= 2.0) {
                 bossState = 'jumping';
@@ -785,7 +709,6 @@ function update() {
             bossMesh.position.y = Math.max(0, Math.sin(bossJumpPhase) * 5.5);
             bossMesh.rotation.y += dt * 4;
             if (bossJumpPhase >= Math.PI) {
-                // ATERRIZAJE
                 bossMesh.position.y = 0;
                 bossState = 'landing';
                 bossStateTimer = 0;
@@ -798,15 +721,13 @@ function update() {
             }
 
         } else if (bossState === 'landing') {
-            // pausa breve después de aterrizar
             bossMesh.rotation.y += dt * 0.5;
-            if (bossStateTimer >= 0.3) {
+            if (bossStateTimer >= 0.8) { // Pausa breve y vuelve a esperar en idle
                 bossState = 'idle';
                 bossStateTimer = 0;
             }
 
         } else if (bossState === 'longJump') {
-            // Salto especial: sube y baja más alto, grieta larga
             bossJumpPhase += dt * 2.8;
             bossMesh.position.y = Math.max(0, Math.sin(bossJumpPhase) * 8.0);
             bossMesh.rotation.y += dt * 6;
@@ -816,7 +737,7 @@ function update() {
                 bossStateTimer = 0;
                 shakeIntensity = 1.0;
                 playBoom(); playBoom();
-                castleLife -= 3; updateUI();
+                castleLife -= 4; updateUI();
                 triggerCrackFlash();
                 spawnLongCrack(bossMesh.position.x, bossMesh.position.z);
                 if (castleLife <= 0) { endGame(); return; }
@@ -824,7 +745,7 @@ function update() {
         }
     }
 
-    // ── GRIETAS (fade) ────────────────────────────────────────────────────────
+    // ── Desvanecimiento de Grietas ──
     for (let i = crackLines.length-1; i >= 0; i--) {
         crackLines[i].userData.life -= dt;
         const t = crackLines[i].userData.life;
@@ -835,7 +756,7 @@ function update() {
         if (t <= 0) { scene.remove(crackLines[i]); crackLines.splice(i,1); }
     }
 
-    // ── CHISPAS (pool) ────────────────────────────────────────────────────────
+    // ── Chispas ──
     for (const s of sparkPool) {
         if (!s.userData.active) continue;
         s.position.add(s.userData.vel);
@@ -844,30 +765,26 @@ function update() {
         if (s.userData.life <= 0) { s.userData.active=false; s.visible=false; }
     }
 
-    // ── COLISIONES ────────────────────────────────────────────────────────────
+    // ── DAÑO Y COLISIONES ──
     for (let bi = bullets.length-1; bi >= 0; bi--) {
         const b = bullets[bi];
         let hit = false;
 
-        // vs jefe
         if (bossActive && bossMesh && bossState !== 'emerging' && bulletHitsObject(b, bossMesh)) {
             scene.remove(b); bullets.splice(bi,1); hit=true;
             bossLife--; updateUI();
             spawnSpark(b.position.clone());
             playSfx(180, 0.08, 'square', 0.07);
 
-            // ── COMPROBAR CUARTOS DE VIDA ─────────────────────────────────────
+            // Fases por cuartos de vida (Furia / Enrage)
             const quartersPassed = Math.floor((80 - bossLife) / 20);
             if (quartersPassed > bossQuarterHits) {
                 bossQuarterHits = quartersPassed;
-                bossSpeed += 0.025; // más veloz cada cuarto
-                // Lanzar salto largo (grieta hasta el castillo)
-                if (bossState === 'idle' || bossState === 'landing') {
-                    bossState = 'longJump';
-                    bossStateTimer = 0;
-                    bossJumpPhase = 0;
-                    playSfx(50, 0.8, 'sawtooth', 0.2);
-                }
+                bossSpeed += 0.03;
+                bossState = 'longJump';
+                bossStateTimer = 0;
+                bossJumpPhase = 0;
+                playSfx(50, 0.8, 'sawtooth', 0.2);
             }
 
             if (bossLife <= 0) {
@@ -880,7 +797,7 @@ function update() {
             continue;
         }
 
-        // vs enemigos — usa hitbox unificada
+        // vs enemigos común
         for (let ei = enemies.length-1; ei >= 0 && !hit; ei--) {
             if (bulletHitsObject(b, enemies[ei])) {
                 spawnSpark(b.position.clone());
@@ -888,7 +805,11 @@ function update() {
                 bullets.splice(bi,1); enemies.splice(ei,1);
                 score++; enemiesKilled++; updateUI(); hit=true;
                 playSfx(300, 0.07, 'square', 0.05);
-                if (enemiesKilled >= enemiesPerWave) spawnBoss();
+                
+                // CONDICIÓN EXTRICTA: El jefe aparece al final de la oleada y si no hay hordas vivas ni otro jefe activo
+                if (enemiesKilled >= enemiesPerWave && enemies.length === 0 && !bossActive) {
+                    spawnBoss();
+                }
             }
         }
     }
