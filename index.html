@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, shrink-to-fit=no">
-<title>Shooter Selva Pro - Dual Touch Fix</title>
+<title>Selva Shooter 3D - Ultra Update</title>
 
 <style>
 body {
@@ -15,16 +15,16 @@ body {
 /* INTERFAZ DE INDICACIONES */
 #tutorial-overlay {
     position: absolute; width: 100%; height: 100%;
-    background: rgba(0, 0, 0, 0.9); color: #fff;
+    background: rgba(10, 15, 25, 0.95); color: #fff;
     display: flex; flex-direction: column; justify-content: center;
     align-items: center; z-index: 100; text-align: center; padding: 20px;
     box-sizing: border-box;
 }
-.instruccion { margin: 8px 0; color: #00ff99; font-size: 16px; }
+.instruccion { margin: 8px 0; color: #00ff99; font-size: 15px; }
 #start-btn {
     margin-top: 20px; padding: 12px 35px; background: #00ff99;
     color: #000; font-weight: bold; border-radius: 30px; cursor: pointer;
-    border: none; font-size: 18px;
+    border: none; font-size: 18px; box-shadow: 0 0 15px #00ff99;
 }
 
 /* BARRAS DE ESTADO */
@@ -32,15 +32,16 @@ body {
     position: absolute; top: 10px; left: 10px; z-index: 10; pointer-events: none;
 }
 .stat-box { margin-bottom: 5px; }
-.label { font-size: 11px; color: #ccc; margin-bottom: 2px; }
+.label { font-size: 11px; color: #ccc; margin-bottom: 2px; text-shadow: 1px 1px 2px black; }
 .bar-bg { width: 140px; height: 8px; background: #222; border: 1px solid #fff; }
-.bar-fill { width: 100%; height: 100%; transition: width 0.3s; }
+.bar-fill { width: 100%; height: 100%; transition: width 0.2s; }
 #castle-bar { background: #00ff00; }
 #wave-bar { background: #00aaff; width: 0%; }
 #boss-ui { display: none; margin-top: 8px; }
 #boss-bar { background: #ff00ff; border: 1px solid #ffaa00; }
+#env-text { color: #ffaa00; font-size: 12px; font-weight: bold; margin-top: 5px; text-shadow: 1px 1px 2px black; }
 
-/* ZONAS DIVIDIDAS DE LA PANTALLA */
+/* DIVISION DE PANTALLA TÁCTIL */
 #left-touch-zone {
     position: absolute; top: 0; left: 0; width: 50%; height: 100%; z-index: 20;
 }
@@ -48,29 +49,29 @@ body {
     position: absolute; top: 0; right: 0; width: 50%; height: 100%; z-index: 20;
 }
 
-/* ELEMENTOS VISUALES DE CONTROL */
+/* MANDOS VISUALES */
 #joystick-container {
     position: absolute; bottom: 40px; left: 40px;
-    width: 110px; height: 110px; background: rgba(255,255,255,0.1);
-    border-radius: 50%; border: 2px solid rgba(255,255,255,0.3);
-    display: flex; justify-content: center; align-items: center;
-    pointer-events: none; /* Evita interferencias con el sistema TouchZone */
+    width: 110px; height: 110px; background: rgba(255,255,255,0.08);
+    border-radius: 50%; border: 2px solid rgba(255,255,255,0.25);
+    display: flex; justify-content: center; align-items: center; pointer-events: none;
 }
 #joystick-handle {
-    width: 45px; height: 45px; background: rgba(255,255,255,0.5);
+    width: 45px; height: 45px; background: rgba(255,255,255,0.4);
     border-radius: 50%; position: absolute; pointer-events: none;
 }
 #fire-btn {
-    position: absolute; bottom: 45px; right: 45px;
-    width: 90px; height: 90px; background: rgba(255, 0, 50, 0.5);
-    border: 3px solid rgba(255, 255, 255, 0.7); border-radius: 50%;
+    position: absolute; bottom: 40px; right: 50px;
+    width: 95px; height: 95px; background: rgba(255, 30, 30, 0.35);
+    border: 4px solid rgba(255, 255, 255, 0.6); border-radius: 50%;
     display: flex; justify-content: center; align-items: center;
-    color: white; font-weight: bold; font-size: 14px; z-index: 30;
+    color: white; font-weight: bold; font-size: 13px; z-index: 30;
+    box-shadow: 0 0 10px rgba(255,0,0,0.5);
     -webkit-tap-highlight-color: transparent;
 }
 #crosshair {
-    position: absolute; top: 50%; left: 50%; width: 12px; height: 12px;
-    border: 2px solid rgba(255,255,255,0.7); border-radius: 50%;
+    position: absolute; top: 50%; left: 50%; width: 10px; height: 10px;
+    border: 2px solid rgba(0, 255, 153, 0.8); border-radius: 50%;
     transform: translate(-50%, -50%); pointer-events: none; z-index: 15;
 }
 </style>
@@ -78,20 +79,21 @@ body {
 <body>
 
 <div id="tutorial-overlay">
-    <h1 style="color: #00ff99; margin-bottom: 5px; font-size: 24px;">SELVA SHOOTER 3D</h1>
-    <p style="color: #ffaa00; font-size: 15px;">🔄 Recomendado: Pantalla Horizontal</p>
-    <div class="instruccion">🕹️ LADO IZQUIERDO: Desliza para moverte</div>
-    <div class="instruccion">🔄 LADO DERECHO: Desliza para apuntar (¡Sensibilidad Alta!)</div>
-    <div class="instruccion">🔴 BOTÓN ROJO: Presiona para disparar</div>
-    <button id="start-btn">¡JUGAR!</button>
+    <h1 style="color: #00ff99; margin-bottom: 5px; font-size: 26px; text-shadow: 0 0 10px #00ff99;">SELVA SHOOTER 3D</h1>
+    <p style="color: #ffaa00; font-size: 14px;">🔄 RECOMENDADO: PANTALLA HORIZONTAL 🔄</p>
+    <div class="instruccion">🕹️ IZQUIERDA: Arrastra para moverte lateralmente</div>
+    <div class="instruccion">🔥 DERECHA: Desliza libremente para apuntar la mira</div>
+    <div class="instruccion">🎯 BOTÓN ROJO: ¡Dispara Y MUEVE la cámara al mismo tiempo!</div>
+    <div class="instruccion">⚠️ CUIDADO: El jefe ahora corre más rápido y hace temblar el suelo</div>
+    <button id="start-btn">¡INICIAR COMBATE!</button>
 </div>
 
 <div id="crosshair"></div>
 
 <div id="ui-top">
-    <div id="score-text" style="color: white; font-size: 18px; font-weight: bold;">Puntos: 0</div>
+    <div id="score-text" style="color: white; font-size: 18px; font-weight: bold; text-shadow: 1px 1px 2px black;">Puntos: 0</div>
     <div class="stat-box">
-        <div class="label">Castillo</div>
+        <div class="label">Estructura del Castillo</div>
         <div class="bar-bg"><div id="castle-bar" class="bar-fill"></div></div>
     </div>
     <div class="stat-box">
@@ -99,29 +101,25 @@ body {
         <div class="bar-bg"><div id="wave-bar" class="bar-fill"></div></div>
     </div>
     <div id="boss-ui">
-        <div class="label" style="color: #ff55ff; font-weight: bold;">¡JEFE FINAL!</div>
+        <div class="label" style="color: #ff55ff; font-weight: bold;">⚠️ ¡JEFE DEVASTANDO EL CASTILLO!</div>
         <div class="bar-bg"><div id="boss-bar" class="bar-fill"></div></div>
     </div>
+    <div id="env-text">Tiempo: Día</div>
 </div>
 
 <div id="left-touch-zone">
-    <div id="joystick-container">
-        <div id="joystick-handle"></div>
-    </div>
+    <div id="joystick-container"><div id="joystick-handle"></div></div>
 </div>
 
 <div id="right-touch-zone">
-    <button id="fire-btn">FUEGO</button>
+    <div id="fire-btn">FUEGO</div>
 </div>
 
 <script type="module">
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.164.1/build/three.module.js';
 
-// --- CONFIGURACIÓN ESCENA ---
+// --- CONFIGURACIÓN ESCENA Y RENDER ---
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x1a2a3a);
-scene.fog = new THREE.FogExp2(0x1a2a3a, 0.02);
-
 const camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
 const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setSize(window.innerWidth, window.innerHeight);
@@ -133,49 +131,87 @@ playerBase.position.set(0, 1.6, 8);
 scene.add(playerBase);
 playerBase.add(camera);
 
-// --- LUCES ---
-const light = new THREE.DirectionalLight(0xffffff, 1.4);
-light.position.set(10, 25, 10);
-scene.add(light);
-scene.add(new THREE.AmbientLight(0x778899, 0.6));
+// --- ILUMINACIÓN DINÁMICA ---
+const hemiLight = new THREE.HemisphereLight(0xffffff, 0x444444, 0.6);
+scene.add(hemiLight);
 
-// --- ENTORNO ---
-const floor = new THREE.Mesh(new THREE.PlaneGeometry(100, 300), new THREE.MeshPhongMaterial({color: 0x1a331a}));
+const sunLight = new THREE.DirectionalLight(0xffffff, 1.2);
+sunLight.position.set(20, 40, 10);
+scene.add(sunLight);
+
+// --- GENERACIÓN DE ENTORNO MEJORADO ---
+const floorGeo = new THREE.PlaneGeometry(120, 320);
+const floorMat = new THREE.MeshStandardMaterial({color: 0x142914, roughness: 0.9});
+const floor = new THREE.Mesh(floorGeo, floorMat);
 floor.rotation.x = -Math.PI/2;
 scene.add(floor);
 
-// Árboles
-for(let i=0; i<45; i++){
+// Bosque denso aleatorio (90 Árboles)
+const treeGroup = new THREE.Group();
+const trunkGeo = new THREE.CylinderGeometry(0.15, 0.3, 3.5, 5);
+const trunkMat = new THREE.MeshStandardMaterial({color: 0x3d2511, roughness: 0.9});
+const leavesGeo = new THREE.SphereGeometry(1.5, 4, 4);
+const leavesMat = new THREE.MeshStandardMaterial({color: 0x0f6b00, roughness: 0.8});
+
+for(let i=0; i<90; i++){
     const tree = new THREE.Group();
-    const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.3, 3, 5), new THREE.MeshPhongMaterial({color: 0x4a2e16}));
-    const leaves = new THREE.Mesh(new THREE.SphereGeometry(1.4, 4, 4), new THREE.MeshPhongMaterial({color: 0x168f00}));
-    leaves.position.y = 2.5;
+    const trunk = new THREE.Mesh(trunkGeo, trunkMat);
+    const leaves = new THREE.Mesh(leavesGeo, leavesMat);
+    leaves.position.y = 2.6;
     tree.add(trunk, leaves);
-    tree.position.set((Math.random()-0.5)*45, 1.5, -Math.random()*150);
-    scene.add(tree);
+    
+    // Posicionamiento orgánico a los lados del camino
+    const side = Math.random() > 0.5 ? 1 : -1;
+    const x = side * (9 + Math.random() * 35);
+    const z = -Math.random() * 160 + 10;
+    const scale = 0.8 + Math.random() * 0.5;
+    
+    tree.position.set(x, 1.75 * scale, z);
+    tree.scale.set(scale, scale, scale);
+    treeGroup.add(tree);
 }
+scene.add(treeGroup);
 
 // Castillo
-const castle = new THREE.Mesh(new THREE.BoxGeometry(16, 6, 4), new THREE.MeshPhongMaterial({color: 0x555555}));
-castle.position.set(0, 3, 14);
+const castleMat = new THREE.MeshStandardMaterial({color: 0x444444, roughness: 0.7});
+const castle = new THREE.Mesh(new THREE.BoxGeometry(18, 7, 4), castleMat);
+castle.position.set(0, 3.5, 14);
 scene.add(castle);
 
-// --- VARIABLES DE JUEGO ---
+// --- SISTEMA DE LLUVIA (PARTÍCULAS 3D) ---
+const rainCount = 450;
+const rainGeo = new THREE.BufferGeometry();
+const rainPositions = new Float32Array(rainCount * 3);
+for(let i=0; i<rainCount*3; i+=3) {
+    rainPositions[i] = (Math.random() - 0.5) * 40;
+    rainPositions[i+1] = Math.random() * 30;
+    rainPositions[i+2] = (Math.random() - 0.5) * 160 - 40;
+}
+rainGeo.setAttribute('position', new THREE.BufferAttribute(rainPositions, 3));
+const rainMat = new THREE.PointsMaterial({color: 0x7799dd, size: 0.12, transparent: true, opacity: 0});
+const rainParticles = new THREE.Points(rainGeo, rainMat);
+scene.add(rainParticles);
+
+// --- VARIABLES CONFIGURABLES DE JUEGO ---
 let score = 0, castleLife = 20, wave = 1, enemiesKilled = 0, enemiesPerWave = 10;
 let bossActive = false, bossLife = 40, bossMesh = null;
 let isGameRunning = false;
+let gameTime = 0;
+let shakeIntensity = 0;
 
-// --- GESTIÓN EXCLUSIVA: MITAD IZQUIERDA (JOYSTICK) ---
+// Variables específicas del comportamiento del jefe
+let bossAttackingCastle = false;
+let bossJumpTimer = 0;
+
+// --- CONTROL: MITAD IZQUIERDA (JOYSTICK DE MOVIMIENTO) ---
 const leftZone = document.getElementById('left-touch-zone');
 const joyHandle = document.getElementById('joystick-handle');
 const joyContainer = document.getElementById('joystick-container');
-let moveX = 0;
-let joystickTouchId = null;
+let moveX = 0, joystickTouchId = null;
 
 leftZone.addEventListener('touchstart', e => {
     e.preventDefault();
-    if (joystickTouchId !== null) return; // Ignorar segundos toques en este lado
-    
+    if (joystickTouchId !== null) return;
     const touch = e.changedTouches[0];
     joystickTouchId = touch.identifier;
 }, { passive: false });
@@ -183,14 +219,9 @@ leftZone.addEventListener('touchstart', e => {
 leftZone.addEventListener('touchmove', e => {
     e.preventDefault();
     if (joystickTouchId === null) return;
-
-    // Buscar el toque correcto del joystick
     let activeTouch = null;
     for(let i=0; i<e.touches.length; i++) {
-        if(e.touches[i].identifier === joystickTouchId) {
-            activeTouch = e.touches[i];
-            break;
-        }
+        if(e.touches[i].identifier === joystickTouchId) { activeTouch = e.touches[i]; break; }
     }
     if (!activeTouch) return;
 
@@ -199,11 +230,8 @@ leftZone.addEventListener('touchmove', e => {
     let dx = activeTouch.clientX - centerX;
     const maxRadius = rect.width / 2;
 
-    // Limitar el movimiento del handle visual
     dx = Math.max(-maxRadius, Math.min(maxRadius, dx));
     joyHandle.style.transform = `translateX(${dx}px)`;
-    
-    // Asignar velocidad de movimiento en base al desplazamiento
     moveX = dx / maxRadius;
 }, { passive: false });
 
@@ -211,26 +239,43 @@ leftZone.addEventListener('touchend', e => {
     e.preventDefault();
     for(let i=0; i<e.changedTouches.length; i++) {
         if(e.changedTouches[i].identifier === joystickTouchId) {
-            joystickTouchId = null;
-            joyHandle.style.transform = `translateX(0px)`;
-            moveX = 0;
-            break;
+            joystickTouchId = null; joyHandle.style.transform = `translateX(0px)`; moveX = 0; break;
         }
     }
 });
 
-// --- GESTIÓN EXCLUSIVA: MITAD DERECHA (ROTACIÓN DE MIRADA) ---
+// --- CONTROL: MITAD DERECHA + BOTÓN INTELIGENTE (TIPO FREE FIRE) ---
 const rightZone = document.getElementById('right-touch-zone');
+const fireBtn = document.getElementById('fire-btn');
 let lookTouchId = null;
 let lastTouchX = 0, lastTouchY = 0;
 let pitch = 0, yaw = 0;
 
-rightZone.addEventListener('touchstart', e => {
-    // Si el toque cae exactamente en el botón de disparo, no activar rotación de cámara
-    if(e.target.id === 'fire-btn') return;
+// Disparador continuo automático mientras se sostiene el botón
+let fireIntervalId = null;
 
-    if (lookTouchId !== null) return;
+function handleLookMove(activeTouch) {
+    const dx = activeTouch.clientX - lastTouchX;
+    const dy = activeTouch.clientY - lastTouchY;
+
+    // ALTA SENSIBILIDAD SOLICITADA
+    const sensitivity = 0.018;
+    yaw -= dx * sensitivity;
+    pitch -= dy * sensitivity;
+    pitch = Math.max(-Math.PI/2.4, Math.min(Math.PI/2.4, pitch));
     
+    playerBase.rotation.y = yaw;
+    camera.rotation.x = pitch;
+
+    lastTouchX = activeTouch.clientX;
+    lastTouchY = activeTouch.clientY;
+}
+
+// Intercepción global de la zona derecha
+rightZone.addEventListener('touchstart', e => {
+    if(e.target.id === 'fire-btn') return; // Delegar al listener específico del botón
+    if (lookTouchId !== null) return;
+
     const touch = e.changedTouches[0];
     lookTouchId = touch.identifier;
     lastTouchX = touch.clientX;
@@ -239,47 +284,62 @@ rightZone.addEventListener('touchstart', e => {
 
 rightZone.addEventListener('touchmove', e => {
     if (lookTouchId === null) return;
-
     let activeTouch = null;
     for(let i=0; i<e.touches.length; i++) {
-        if(e.touches[i].identifier === lookTouchId) {
-            activeTouch = e.touches[i];
-            break;
-        }
+        if(e.touches[i].identifier === lookTouchId) { activeTouch = e.touches[i]; break; }
     }
-    if (!activeTouch) return;
-
-    const dx = activeTouch.clientX - lastTouchX;
-    const dy = activeTouch.clientY - lastTouchY;
-
-    // SENSILIBIDAD SIGNIFICATIVAMENTE OPTIMIZADA (De 0.005 subió a 0.016)
-    const sensitivity = 0.016;
-    yaw -= dx * sensitivity;
-    pitch -= dy * sensitivity;
-    
-    pitch = Math.max(-Math.PI/2.3, Math.min(Math.PI/2.3, pitch));
-    
-    playerBase.rotation.y = yaw;
-    camera.rotation.x = pitch;
-
-    lastTouchX = activeTouch.clientX;
-    lastTouchY = activeTouch.clientY;
+    if (activeTouch) handleLookMove(activeTouch);
 });
 
 rightZone.addEventListener('touchend', e => {
     for(let i=0; i<e.changedTouches.length; i++) {
-        if(e.changedTouches[i].identifier === lookTouchId) {
-            lookTouchId = null;
-            break;
-        }
+        if(e.changedTouches[i].identifier === lookTouchId) { lookTouchId = null; break; }
+    }
+});
+
+// Lógica Dual del Botón de disparo (Dispara + Permite Rotar Cámara)
+fireBtn.addEventListener('touchstart', e => {
+    e.preventDefault();
+    const touch = e.changedTouches[0];
+    
+    // El botón toma el control de la mirada si no hay otro dedo haciéndolo
+    if(lookTouchId === null) {
+        lookTouchId = touch.identifier;
+        lastTouchX = touch.clientX;
+        lastTouchY = touch.clientY;
+    }
+
+    fireBullet();
+    if(!fireIntervalId) {
+        fireIntervalId = setInterval(fireBullet, 150); // Ráfaga veloz continua
+    }
+}, { passive: false });
+
+fireBtn.addEventListener('touchmove', e => {
+    e.preventDefault();
+    if (lookTouchId === null) return;
+    let activeTouch = null;
+    for(let i=0; i<e.touches.length; i++) {
+        if(e.touches[i].identifier === lookTouchId) { activeTouch = e.touches[i]; break; }
+    }
+    if (activeTouch) handleLookMove(activeTouch);
+}, { passive: false });
+
+fireBtn.addEventListener('touchend', e => {
+    e.preventDefault();
+    clearInterval(fireIntervalId);
+    fireIntervalId = null;
+    
+    for(let i=0; i<e.changedTouches.length; i++) {
+        if(e.changedTouches[i].identifier === lookTouchId) { lookTouchId = null; break; }
     }
 });
 
 // --- SISTEMA DE BALAS ---
 const bullets = [];
-function fire(){
+function fireBullet(){
     if(!isGameRunning) return;
-    const b = new THREE.Mesh(new THREE.SphereGeometry(0.15, 4, 4), new THREE.MeshBasicMaterial({color: 0xffff00}));
+    const b = new THREE.Mesh(new THREE.SphereGeometry(0.14, 4, 4), new THREE.MeshBasicMaterial({color: 0xffea00}));
     b.position.copy(playerBase.position);
     
     const dir = new THREE.Vector3();
@@ -288,14 +348,8 @@ function fire(){
     
     bullets.push(b);
     scene.add(b);
-    playSfx(600, 0.08);
+    playSfx(580, 0.06);
 }
-
-// Botón de disparo dedicado
-document.getElementById('fire-btn').addEventListener('touchstart', e => {
-    e.preventDefault(); 
-    fire();
-});
 
 // --- AUDIO SINTETIZADO ---
 const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -304,79 +358,155 @@ function playSfx(f, d){
     const o = audioCtx.createOscillator(), g = audioCtx.createGain();
     o.connect(g); g.connect(audioCtx.destination);
     o.frequency.setValueAtTime(f, audioCtx.currentTime);
-    g.gain.setValueAtTime(0.08, audioCtx.currentTime);
+    g.gain.setValueAtTime(0.06, audioCtx.currentTime);
     g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + d);
     o.start(); o.stop(audioCtx.currentTime + d);
 }
 
 // --- LOGICA DE ENEMIGOS ---
 const enemies = [];
-function spawn(){
+function spawnEnemy(){
     if(!isGameRunning || bossActive || enemiesKilled >= enemiesPerWave) return;
-    const e = new THREE.Mesh(new THREE.BoxGeometry(1,1,1), new THREE.MeshPhongMaterial({color: 0xff3333}));
-    e.position.set((Math.random()-0.5)*12, 0.5, -80);
+    const e = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.9, 0.9), new THREE.MeshStandardMaterial({color: 0xdd2222, roughness: 0.5}));
+    e.position.set((Math.random()-0.5)*13, 0.45, -80);
     enemies.push(e);
     scene.add(e);
 }
-setInterval(spawn, 1000);
+setInterval(spawnEnemy, 950);
 
 function spawnBoss(){
-    bossActive = true; bossLife = 40;
-    bossMesh = new THREE.Mesh(new THREE.BoxGeometry(3.8, 3.8, 3.8), new THREE.MeshPhongMaterial({color: 0x00ff66}));
-    bossMesh.position.set(0, 1.9, -80);
+    bossActive = true; 
+    bossLife = 40;
+    bossAttackingCastle = false;
+    bossMesh = new THREE.Mesh(new THREE.BoxGeometry(4, 4, 4), new THREE.MeshStandardMaterial({color: 0xaa00ff, roughness: 0.4}));
+    bossMesh.position.set(0, 2, -80);
     scene.add(bossMesh);
     document.getElementById('boss-ui').style.display = 'block';
+    updateUI();
 }
 
-// --- ACTUALIZACIONES POR FRAME ---
-function update(){
+// --- ANIMACIÓN DEL MOTOR (LOOP PRINCIPAL) ---
+function update() {
     if(!isGameRunning) return;
 
-    // Movimiento fluido derivado del Joystick
-    playerBase.position.x += moveX * 0.16;
-    playerBase.position.x = Math.max(-7.5, Math.min(7.5, playerBase.position.x));
+    gameTime += 0.016; // Aproximación basada en 60 FPS
 
-    // Desplazamiento de balas
+    // 🌤️ CICLO DE DIA Y NOCHE (30s día, 30s noche = 60s ciclo total)
+    const cyclePos = (gameTime % 60) / 60; 
+    const dayFactor = Math.sin(cyclePos * Math.PI * 2); // Oscilación suave entre -1 y 1
+
+    // Transición fluida de luces ambientales y del color de niebla
+    const intensity = Math.max(0.15, (dayFactor + 1) / 2); // Rango de 0.15 (Noche) a 1.0 (Día)
+    sunLight.intensity = intensity * 1.3;
+    hemiLight.intensity = Math.max(0.2, intensity * 0.7);
+    
+    const skyColor = new THREE.Color(0x1a2a3a).multiplyScalar(intensity);
+    scene.background = skyColor;
+    scene.fog.color = skyColor;
+
+    // Actualizar texto del entorno de forma amigable
+    const envText = document.getElementById('env-text');
+    if (dayFactor > 0.3) envText.innerText = "Tiempo: Día ☀️";
+    else if (dayFactor < -0.3) envText.innerText = "Tiempo: Noche 🌙";
+    else envText.innerText = "Tiempo: Transición Climatológica 🌓";
+
+    // 🌧️ PETICIÓN EXTRA OPTIONAL: Tormenta de lluvia cada 2 días (Cada 120 segundos)
+    const isRainyPeriod = (gameTime % 120) > 60; // Llueve la mitad del tiempo de un ciclo extendido
+    if(isRainyPeriod) {
+        rainMat.opacity = Math.min(0.6, rainMat.opacity + 0.01); // Entrada suave de la lluvia
+        
+        // Animación física de caída de partículas de lluvia
+        const positions = rainParticles.geometry.attributes.position.array;
+        for(let i=1; i<positions.length; i+=3) {
+            positions[i] -= 0.45; // Velocidad de caída vertical
+            if(positions[i] < 0) positions[i] = 25 + Math.random()*5; // Re-generación en el cielo
+        }
+        rainParticles.geometry.attributes.position.needsUpdate = true;
+        
+        // El cielo se oscurece extra por las nubes de tormenta
+        sunLight.intensity *= 0.5;
+    } else {
+        rainMat.opacity = Math.max(0, rainMat.opacity - 0.01); // Disipación suave
+    }
+
+    // APLICACIÓN DE TERREMOTO EN LA CÁMARA (Screen Shake)
+    if(shakeIntensity > 0) {
+        camera.position.set(
+            (Math.random() - 0.5) * shakeIntensity,
+            (Math.random() - 0.5) * shakeIntensity,
+            0
+        );
+        shakeIntensity *= 0.9; // Amortiguación natural
+    } else {
+        camera.position.set(0, 0, 0);
+    }
+
+    // Desplazamiento lateral del jugador vía Joystick
+    playerBase.position.x += moveX * 0.16;
+    playerBase.position.x = Math.max(-7.8, Math.min(7.8, playerBase.position.x));
+
+    // Balas
     bullets.forEach((b, i) => {
-        b.position.addScaledVector(b.userData.dir, 1.3);
+        b.position.addScaledVector(b.userData.dir, 1.4);
         if(b.position.z < -110 || b.position.z > 20) { scene.remove(b); bullets.splice(i, 1); }
     });
 
-    // Avance de enemigos comunes
+    // Enemigos comunes
     enemies.forEach((e, i) => {
         e.position.z += 0.16;
         if(e.position.z > 13) {
             scene.remove(e); enemies.splice(i, 1);
             castleLife--; updateUI();
+            playSfx(100, 0.2);
             if(castleLife <= 0) endGame();
         }
     });
 
-    // Movimiento del Jefe Final
+    // COMPORTAMIENTO AVANZADO DEL JEFE FINAL
     if(bossActive && bossMesh){
-        bossMesh.position.z += 0.055;
-        if(bossMesh.position.z > 13) { 
-            castleLife -= 5; bossActive = false; scene.remove(bossMesh); 
-            document.getElementById('boss-ui').style.display = 'none';
-            updateUI(); if(castleLife <= 0) endGame();
+        if(!bossAttackingCastle) {
+            // VELOCIDAD DEL JEFE INCREMENTADA (Subió de 0.055 a 0.075)
+            bossMesh.position.z += 0.075;
+            
+            // Si el jefe toca el frente del castillo
+            if(bossMesh.position.z > 11) { 
+                bossAttackingCastle = true;
+                bossJumpTimer = 0;
+            }
+        } else {
+            // Mecánica de pisotón y saltos furiosos
+            bossJumpTimer += 0.2;
+            bossMesh.position.y = 2 + Math.abs(Math.sin(bossJumpTimer)) * 2.5; // Curva de salto
+            
+            // Impacto contra el suelo detectado en la parte baja de la parábola
+            if(bossMesh.position.y < 2.2) {
+                shakeIntensity = 0.35; // Activa temblor fuerte de cámara
+                playSfx(80, 0.15); // Sonido grave de impacto
+                
+                // Daño crítico por segundo al castillo
+                castleLife -= 0.08; 
+                updateUI();
+                if(castleLife <= 0) endGame();
+            }
         }
     }
 
-    // Comprobación de impactos
+    // Colisiones e impactos de proyectiles
     bullets.forEach((b, bi) => {
         if(bossActive && bossMesh && b.position.distanceTo(bossMesh.position) < 2.4){
             scene.remove(b); bullets.splice(bi, 1);
             bossLife--; updateUI();
-            playSfx(150, 0.12);
+            playSfx(220, 0.08);
             if(bossLife <= 0){
-                scene.remove(bossMesh); bossActive = false;
+                scene.remove(bossMesh); bossActive = false; bossAttackingCastle = false;
                 score += 50; enemiesKilled = 0; wave++; 
                 enemiesPerWave += 5; updateUI();
                 document.getElementById('boss-ui').style.display = 'none';
             }
+            return;
         }
         enemies.forEach((e, ei) => {
-            if(b.position.distanceTo(e.position) < 0.9){
+            if(b.position.distanceTo(e.position) < 0.95){
                 scene.remove(b); scene.remove(e);
                 bullets.splice(bi, 1); enemies.splice(ei, 1);
                 score++; enemiesKilled++; updateUI();
@@ -388,7 +518,7 @@ function update(){
 
 function updateUI(){
     document.getElementById('score-text').innerText = `Puntos: ${score}`;
-    document.getElementById('castle-bar').style.width = `${(castleLife/20)*100}%`;
+    document.getElementById('castle-bar').style.width = `${Math.max(0, (castleLife/20)*100)}%`;
     document.getElementById('wave-bar').style.width = `${(enemiesKilled/enemiesPerWave)*100}%`;
     document.getElementById('wave-text').innerText = `Oleada: ${wave}`;
     if(bossActive) document.getElementById('boss-bar').style.width = `${(bossLife/40)*100}%`;
@@ -396,7 +526,8 @@ function updateUI(){
 
 function endGame(){
     isGameRunning = false;
-    alert("¡EL CASTILLO HA CAÍDO!\nPuntaje Máximo: " + score);
+    clearInterval(fireIntervalId);
+    alert("🔥 EL CASTILLO HA SIDO DESTRUIDO 🔥\nPuntaje Final: " + score);
     location.reload();
 }
 
@@ -406,7 +537,7 @@ function animate(){
     renderer.render(scene, camera);
 }
 
-// Inicialización de Pantalla Completa y juego
+// Activador del panel tutorial
 document.getElementById('start-btn').addEventListener('click', () => {
     document.getElementById('tutorial-overlay').style.display = 'none';
     if(audioCtx.state === 'suspended') audioCtx.resume();
