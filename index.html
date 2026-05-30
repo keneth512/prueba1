@@ -150,23 +150,28 @@ for (let i = 0; i < 30; i++) {
     scene.add(patch);
 }
 
-// ─── ÁRBOLES (geometría compartida, instancias por InstancedMesh) ─────────────
-// Usamos InstancedMesh para los 100 árboles → 2 draw calls en vez de 300
-const trunkInstGeo = new THREE.CylinderGeometry(0.12, 0.28, 3.5, 5);
-const trunkInstMat = new THREE.MeshLambertMaterial({ color: 0x4a2e10 });
-const leavesInstGeo = new THREE.SphereGeometry(1.5, 4, 4);
-const leafColors = [0x0d5e00, 0x145c10, 0x1a6b08, 0x0b4a1a];
-
+// ─── ÁRBOLES (InstancedMesh — capacidad exacta sin overflow) ─────────────────
 const TREE_COUNT = 90;
-const trunkInst  = new THREE.InstancedMesh(trunkInstGeo, trunkInstMat, TREE_COUNT);
-// Creamos 4 InstancedMesh de hojas, uno por color
-const leafInsts = leafColors.map(c =>
-    new THREE.InstancedMesh(leavesInstGeo, new THREE.MeshLambertMaterial({ color: c }), Math.ceil(TREE_COUNT / leafColors.length))
+// Cada árbol tiene 2 capas de hojas → total TREE_COUNT*2 instancias de hoja
+const trunkInst = new THREE.InstancedMesh(
+    new THREE.CylinderGeometry(0.12, 0.28, 3.5, 5),
+    new THREE.MeshLambertMaterial({ color: 0x4a2e10 }),
+    TREE_COUNT
 );
-leafInsts.forEach(m => { m.count = 0; scene.add(m); });
+const leavesInst = new THREE.InstancedMesh(
+    new THREE.SphereGeometry(1.5, 4, 4),
+    new THREE.MeshLambertMaterial({ color: 0x1a6b08 }),
+    TREE_COUNT * 2  // capacidad exacta: 2 capas × 90 árboles = 180
+);
+// Color por instancia de hoja (verde variado)
+const leafColorPalette = [0x0d5e00, 0x145c10, 0x1a6b08, 0x0b4a1a];
+const _leafColor = new THREE.Color();
+
 scene.add(trunkInst);
+scene.add(leavesInst);
 
 const _dummy = new THREE.Object3D();
+let leafIdx = 0;
 for (let i = 0; i < TREE_COUNT; i++) {
     const side  = Math.random() > 0.5 ? 1 : -1;
     const scale = 0.75 + Math.random() * 0.7;
@@ -180,24 +185,28 @@ for (let i = 0; i < TREE_COUNT; i++) {
     _dummy.updateMatrix();
     trunkInst.setMatrixAt(i, _dummy.matrix);
 
-    // Hojas (capa base)
-    const li = i % leafColors.length;
-    const lm = leafInsts[li];
+    // Capa base de hojas
     _dummy.position.set(x, (2.2 + 1.75) * scale, z);
     _dummy.scale.set(scale * 1.4, scale * 1.2, scale * 1.4);
+    _dummy.rotation.y = Math.random() * Math.PI * 2;
     _dummy.updateMatrix();
-    lm.setMatrixAt(lm.count, _dummy.matrix);
-    lm.count++;
+    leavesInst.setMatrixAt(leafIdx, _dummy.matrix);
+    _leafColor.setHex(leafColorPalette[i % leafColorPalette.length]);
+    leavesInst.setColorAt(leafIdx, _leafColor);
+    leafIdx++;
 
-    // Capa superior más pequeña
+    // Capa superior
     _dummy.position.set(x, (3.4 + 1.75) * scale, z);
     _dummy.scale.setScalar(scale * 0.9);
     _dummy.updateMatrix();
-    lm.setMatrixAt(lm.count, _dummy.matrix);
-    lm.count++;
+    leavesInst.setMatrixAt(leafIdx, _dummy.matrix);
+    _leafColor.setHex(leafColorPalette[(i + 2) % leafColorPalette.length]);
+    leavesInst.setColorAt(leafIdx, _leafColor);
+    leafIdx++;
 }
 trunkInst.instanceMatrix.needsUpdate = true;
-leafInsts.forEach(m => { m.instanceMatrix.needsUpdate = true; });
+leavesInst.instanceMatrix.needsUpdate = true;
+if (leavesInst.instanceColor) leavesInst.instanceColor.needsUpdate = true;
 
 // ─── CASTILLO ─────────────────────────────────────────────────────────────────
 const castleMat     = new THREE.MeshLambertMaterial({ color: 0x5a5a5a });
