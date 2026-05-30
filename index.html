@@ -22,7 +22,7 @@ canvas { display:block; position:absolute; top:0; left:0; z-index:1; }
     border:none; font-size:18px; box-shadow:0 0 15px #00ff99;
     -webkit-tap-highlight-color:transparent;
 }
-#ui-top { position:fixed; top:10px; left:10px; z-index:50; pointer-events:none; }
+#ui-top { position:fixed; top:10px; left:10px; z-index:150; pointer-events:none; }
 .stat-box { margin-bottom:5px; }
 .label { font-size:11px; color:#ccc; margin-bottom:2px; text-shadow:1px 1px 2px black; }
 .bar-bg { width:140px; height:8px; background:#222; border:1px solid #fff; }
@@ -38,6 +38,13 @@ canvas { display:block; position:absolute; top:0; left:0; z-index:1; }
     background:radial-gradient(ellipse at center,rgba(255,80,0,0.6) 0%,transparent 70%);
     pointer-events:none; z-index:60; opacity:0; transition:opacity 0.07s;
 }
+
+/* ZONA TÁCTIL DERECHA PARA MIRAR (Evita bloqueos del canvas) */
+#touch-zone-look {
+    position: fixed; top: 0; right: 0; width: 55%; height: 100%;
+    z-index: 50; touch-action: none;
+}
+
 #joystick-container {
     position:fixed; bottom:40px; left:40px;
     width:110px; height:110px; background:rgba(255,255,255,0.08);
@@ -50,18 +57,18 @@ canvas { display:block; position:absolute; top:0; left:0; z-index:1; }
     border-radius:50%; position:absolute; pointer-events:none;
 }
 #fire-btn {
-    position:fixed; bottom:40px; right:50px;
-    width:95px; height:95px; background:rgba(255,30,30,0.4);
-    border:4px solid rgba(255,255,255,0.6); border-radius:50%;
+    position:fixed; bottom:45px; right:45px;
+    width:95px; height:95px; background:rgba(255,30,30,0.45);
+    border:4px solid rgba(255,255,255,0.7); border-radius:50%;
     display:flex; justify-content:center; align-items:center;
-    color:white; font-weight:bold; font-size:13px; z-index:100;
-    box-shadow:0 0 10px rgba(255,0,0,0.5);
+    color:white; font-weight:bold; font-size:14px; z-index:100;
+    box-shadow:0 0 15px rgba(255,0,0,0.4);
     -webkit-tap-highlight-color:transparent; touch-action:none;
 }
 #crosshair {
     position:fixed; top:50%; left:50%; width:10px; height:10px;
     border:2px solid rgba(0,255,153,0.8); border-radius:50%;
-    transform:translate(-50%,-50%); pointer-events:none; z-index:50;
+    transform:translate(-50%,-50%); pointer-events:none; z-index:150;
 }
 </style>
 </head>
@@ -70,9 +77,9 @@ canvas { display:block; position:absolute; top:0; left:0; z-index:1; }
 <div id="tutorial-overlay">
     <h1 style="color:#00ff99;margin-bottom:5px;font-size:26px;text-shadow:0 0 10px #00ff99;">SELVA SHOOTER 3D</h1>
     <p style="color:#ffaa00;font-size:14px;">🔄 RECOMENDADO: PANTALLA HORIZONTAL 🔄</p>
-    <div class="instruccion">🕹️ IZQUIERDA: Mueve el stick para desplazarte</div>
-    <div class="instruccion">🔥 DERECHA: Desliza cualquier parte vacía para apuntar</div>
-    <div class="instruccion">🎯 BOTÓN ROJO: ¡Dispara y también sirve para mover la mira!</div>
+    <div class="instruccion">🕹️ IZQUIERDA: Arrastra el stick para moverte de lado</div>
+    <div class="instruccion">🔥 DERECHA: Desliza el dedo en la zona derecha para apuntar</div>
+    <div class="instruccion">🎯 BOTÓN ROJO: Mantén presionado para disparar ráfagas</div>
     <button id="start-btn" onclick="startGame()">¡INICIAR COMBATE!</button>
 </div>
 
@@ -95,6 +102,8 @@ canvas { display:block; position:absolute; top:0; left:0; z-index:1; }
     </div>
     <div id="env-text">Tiempo: Día</div>
 </div>
+
+<div id="touch-zone-look"></div>
 
 <div id="joystick-container"><div id="joystick-handle"></div></div>
 <div id="fire-btn">FUEGO</div>
@@ -326,12 +335,12 @@ function playBoom() {
     playSfx(85, 0.3, 'sine', 0.1);
 }
 
-// ─── VARIABLES GLOBALES DE ESTADO (CORREGIDAS) ────────────────────────────────
+// ─── VARIABLES GLOBALES DE ESTADO ─────────────────────────────────────────────
 let score = 0, castleLife = 20, wave = 1, enemiesKilled = 0, enemiesPerWave = 10;
 let bossActive = false, bossLife = 80, bossMesh = null;
 let isGameRunning = false;
 let gameTime = 0, dt = 0.016, shakeIntensity = 0;
-let lastTime = performance.now(); // Declarada arriba correctamente global
+let lastTime = performance.now();
 
 let bossState = 'walking';
 let bossStateTimer = 0;
@@ -342,88 +351,115 @@ let bossQuarterHits = 0;
 const crackFlash = document.getElementById('crack-flash');
 let flashTimer = 0;
 
-// ─── CONTROLES DE TOQUE DE VENTANA GLOBAL (REPARADOS) ────────────────────────
+// ─── SISTEMA TÁCTIL MÓVIL REPARADO ────────────────────────────────────────────
 const joyContainer = document.getElementById('joystick-container');
 const joyHandle    = document.getElementById('joystick-handle');
 const fireBtn      = document.getElementById('fire-btn');
-let moveX = 0, pitch = 0, yaw = 0;
-let activeJoystickId = null, activeLookId = null;
-let lastLookX = 0, lastLookY = 0, fireIntervalId = null;
+const lookZone     = document.getElementById('touch-zone-look');
 
+let moveX = 0, pitch = 0, yaw = 0;
+let activeJoystickId = null;
+let activeLookId = null;
+let lastLookX = 0, lastLookY = 0;
+let fireIntervalId = null;
+
+// 1. JOYSTICK (Moverse de lado)
 joyContainer.addEventListener('touchstart', e => {
     e.preventDefault(); if (!isGameRunning) return;
     const t = e.changedTouches[0];
-    if (activeJoystickId===null) { activeJoystickId=t.identifier; updateJoystick(t); }
+    if (activeJoystickId === null) { activeJoystickId = t.identifier; updateJoystick(t); }
 }, {passive:false});
+
 joyContainer.addEventListener('touchmove', e => {
     e.preventDefault(); if (!isGameRunning) return;
-    for (const t of e.changedTouches) if (t.identifier===activeJoystickId) updateJoystick(t);
+    for (const t of e.changedTouches) {
+        if (t.identifier === activeJoystickId) updateJoystick(t);
+    }
 }, {passive:false});
+
 joyContainer.addEventListener('touchend', e => {
     e.preventDefault();
     for (const t of e.changedTouches) {
-        if (t.identifier===activeJoystickId) {
-            activeJoystickId=null;
-            joyHandle.style.transform='translate(0,0)'; moveX=0;
+        if (t.identifier === activeJoystickId) {
+            activeJoystickId = null;
+            joyHandle.style.transform = 'translate(0,0)';
+            moveX = 0;
         }
     }
 }, {passive:false});
 
+function updateJoystick(touch) {
+    const rect = joyContainer.getBoundingClientRect();
+    let dx = touch.clientX - (rect.left + rect.width / 2);
+    const maxR = rect.width / 2;
+    dx = Math.max(-maxR, Math.min(maxR, dx));
+    joyHandle.style.transform = `translateX(${dx}px)`;
+    moveX = dx / maxR;
+}
+
+// 2. BOTÓN DE FUEGO (Ráfaga automatizada al sostener)
 fireBtn.addEventListener('touchstart', e => {
     e.preventDefault(); if (!isGameRunning) return;
-    const t = e.changedTouches[0];
-    if (!fireIntervalId) { fireBullet(); fireIntervalId=setInterval(fireBullet,150); }
-    if (activeLookId===null) { activeLookId=t.identifier; lastLookX=t.clientX; lastLookY=t.clientY; }
-}, {passive:false});
-fireBtn.addEventListener('touchmove', e => {
-    e.preventDefault(); if (!isGameRunning) return;
-    for (const t of e.changedTouches) if (t.identifier===activeLookId) applyLook(t);
-}, {passive:false});
-fireBtn.addEventListener('touchend', e => {
-    e.preventDefault();
-    for (const t of e.changedTouches) if (t.identifier===activeLookId) activeLookId=null;
-    if (!Array.from(e.touches).some(t=>t.target===fireBtn)) {
-        clearInterval(fireIntervalId); fireIntervalId=null;
+    if (!fireIntervalId) {
+        fireBullet();
+        fireIntervalId = setInterval(fireBullet, 140);
     }
 }, {passive:false});
 
-// SOLUCIÓN AL GIRO DE PANTALLA: Escucha global de ventanas para evitar bloqueos
-window.addEventListener('touchstart', e => {
-    if (!isGameRunning) return;
+fireBtn.addEventListener('touchend', e => {
+    e.preventDefault();
+    if (fireIntervalId) { clearInterval(fireIntervalId); fireIntervalId = null; }
+}, {passive:false});
+
+fireBtn.addEventListener('touchcancel', e => {
+    if (fireIntervalId) { clearInterval(fireIntervalId); fireIntervalId = null; }
+});
+
+// 3. ZONA DERECHA EXCLUSIVA (Girar la cámara sin obstrucción)
+lookZone.addEventListener('touchstart', e => {
+    e.preventDefault(); if (!isGameRunning) return;
+    const t = e.changedTouches[0];
+    if (activeLookId === null) {
+        activeLookId = t.identifier;
+        lastLookX = t.clientX;
+        lastLookY = t.clientY;
+    }
+}, {passive:false});
+
+lookZone.addEventListener('touchmove', e => {
+    e.preventDefault(); if (!isGameRunning) return;
     for (const t of e.changedTouches) {
-        // Si el toque es en la mitad derecha de la pantalla y no está sobre los botones
-        if (activeLookId === null && t.clientX > window.innerWidth / 2 && t.target !== fireBtn) {
-            activeLookId = t.identifier;
+        if (t.identifier === activeLookId) {
+            const dx = t.clientX - lastLookX;
+            const dy = t.clientY - lastLookY;
+            
+            // Sensibilidad móvil calibrada para pantallas táctiles de alta densidad
+            yaw -= dx * 0.005; 
+            pitch -= dy * 0.005;
+            pitch = Math.max(-Math.PI/2.5, Math.min(Math.PI/2.5, pitch));
+            
+            playerBase.rotation.y = yaw;
+            camera.rotation.x = pitch;
+            
             lastLookX = t.clientX;
             lastLookY = t.clientY;
         }
     }
-});
-window.addEventListener('touchmove', e => {
-    if (!isGameRunning) return;
+}, {passive:false});
+
+lookZone.addEventListener('touchend', e => {
+    e.preventDefault();
     for (const t of e.changedTouches) {
-        if (t.identifier === activeLookId) applyLook(t);
+        if (t.identifier === activeLookId) activeLookId = null;
     }
 }, {passive:false});
-window.addEventListener('touchend', e => {
-    for (const t of e.changedTouches) if (t.identifier === activeLookId) activeLookId = null;
+
+lookZone.addEventListener('touchcancel', e => {
+    for (const t of e.changedTouches) {
+        if (t.identifier === activeLookId) activeLookId = null;
+    }
 });
 
-function applyLook(touch) {
-    const dx=touch.clientX-lastLookX, dy=touch.clientY-lastLookY;
-    yaw-=dx*0.007; pitch-=dy*0.007; // Sensibilidad estabilizada
-    pitch=Math.max(-Math.PI/2.4,Math.min(Math.PI/2.4,pitch));
-    playerBase.rotation.y=yaw; camera.rotation.x=pitch;
-    lastLookX=touch.clientX; lastLookY=touch.clientY;
-}
-function updateJoystick(touch) {
-    const rect=joyContainer.getBoundingClientRect();
-    let dx=touch.clientX-(rect.left+rect.width/2);
-    const maxR=rect.width/2;
-    dx=Math.max(-maxR,Math.min(maxR,dx));
-    joyHandle.style.transform=`translateX(${dx}px)`;
-    moveX=dx/maxR;
-}
 
 // ─── BALAS ────────────────────────────────────────────────────────────────────
 const bulletGeo = new THREE.SphereGeometry(0.14, 4, 4);
@@ -475,7 +511,6 @@ const enemies = [];
 let spawnTimer = null;
 function startSpawning() {
     if (spawnTimer) clearInterval(spawnTimer);
-    // Reparado: El intervalo ahora se ejecuta correctamente al inicio
     spawnTimer = setInterval(() => {
         if (!isGameRunning || bossActive || enemiesKilled >= enemiesPerWave) return;
         const e = makeEnemy();
@@ -543,7 +578,8 @@ function triggerCrackFlash() {
 
 function endGame() {
     isGameRunning = false;
-    clearInterval(fireIntervalId); clearInterval(spawnTimer);
+    if (fireIntervalId) clearInterval(fireIntervalId); 
+    clearInterval(spawnTimer);
     setTimeout(() => {
         alert("🔥 EL CASTILLO HA SIDO DESTRUIDO 🔥\nPuntaje Final: " + score);
         location.reload();
@@ -578,7 +614,7 @@ function update() {
         if (flashTimer <= 0) crackFlash.style.opacity = '0';
     }
 
-    // ── Ciclo de Iluminación ──
+    // ── Iluminación ──
     const cyclePos = (gameTime % 60) / 60;
     const dayFactor = Math.sin(cyclePos * Math.PI * 2);
     const dayIntensity = Math.max(0.45, (dayFactor+1)/2);
@@ -597,7 +633,7 @@ function update() {
     else if (dayFactor < -0.35) envText.innerText = "Tiempo: Noche 🌙";
     else                         envText.innerText = "Tiempo: Atardecer/Amanecer 🌅";
 
-    // ── Clima Lluvia ──
+    // ── Lluvia ──
     const isRainy = (gameTime % 120) > 60;
     if (isRainy && !rainVisible) { rainVisible = true; }
     if (!isRainy && rainVisible) {
@@ -618,7 +654,7 @@ function update() {
         }
     }
 
-    // ── Cámara Impacto Shake ──
+    // ── Shake ──
     if (shakeIntensity > 0.01) {
         camera.position.set((Math.random()-0.5)*shakeIntensity, (Math.random()-0.5)*shakeIntensity, 0);
         shakeIntensity *= 0.82;
@@ -629,7 +665,7 @@ function update() {
     playerBase.position.x += moveX * 0.16;
     playerBase.position.x = Math.max(-7.8, Math.min(7.8, playerBase.position.x));
 
-    // ── Desplazar Proyectiles ──
+    // ── Balas ──
     for (let i = bullets.length-1; i >= 0; i--) {
         const b = bullets[i];
         b.position.addScaledVector(b.userData.dir, 1.5);
@@ -638,7 +674,7 @@ function update() {
         }
     }
 
-    // ── Desplazar Enemigos Comunes ──
+    // ── Enemigos ──
     for (let i = enemies.length-1; i >= 0; i--) {
         const e = enemies[i];
         e.position.z += 0.15;
@@ -656,7 +692,7 @@ function update() {
         }
     }
 
-    // ── Controlador de Estados del Boss ──
+    // ── Jefe ──
     if (bossActive && bossMesh) {
         bossStateTimer += dt;
 
@@ -737,7 +773,7 @@ function update() {
         if (t <= 0) { scene.remove(crackLines[i]); crackLines.splice(i,1); }
     }
 
-    // ── Partículas Dinámicas ──
+    // ── Partículas ──
     for (const s of sparkPool) {
         if (!s.userData.active) continue;
         s.position.add(s.userData.vel);
@@ -746,7 +782,7 @@ function update() {
         if (s.userData.life <= 0) { s.userData.active=false; s.visible=false; }
     }
 
-    // ── DETECCIÓN DE IMPACTOS / DAÑO ──
+    // ── Colisiones ──
     for (let bi = bullets.length-1; bi >= 0; bi--) {
         const b = bullets[bi];
         let hit = false;
@@ -802,7 +838,7 @@ function animate() {
 window.startGame = function() {
     document.getElementById('tutorial-overlay').style.display='none';
     isGameRunning=true;
-    lastTime=performance.now(); // Reiniciar contador justo al pulsar iniciar
+    lastTime=performance.now();
     startSpawning();
     try { getAudio().resume(); } catch(e) {}
 };
